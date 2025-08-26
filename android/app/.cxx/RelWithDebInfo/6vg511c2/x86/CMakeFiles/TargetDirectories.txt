@@ -1,0 +1,2 @@
+/Users/mnkha/Apps/azanguru/android/app/.cxx/RelWithDebInfo/6vg511c2/x86/CMakeFiles/edit_cache.dir
+/Users/mnkha/Apps/azanguru/android/app/.cxx/RelWithDebInfo/6vg511c2/x86/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,2 @@
+/Users/mnkha/Downloads/quranguru_com-main/android/app/.cxx/Debug/233s2e5m/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/mnkha/Downloads/quranguru_com-main/android/app/.cxx/Debug/233s2e5m/armeabi-v7a/CMakeFiles/rebuild_cache.dir

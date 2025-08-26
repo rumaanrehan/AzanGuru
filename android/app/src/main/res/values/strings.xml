@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_channel_id">com.azanguru.learners</string>
+    <string name="facebook_app_id">766500072340873</string>
+    <string name="facebook_client_token">ad09e46a6c4e50ba5a641951143ef586</string>
+</resources>

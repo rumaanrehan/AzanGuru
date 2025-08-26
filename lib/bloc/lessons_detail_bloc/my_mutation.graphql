@@ -1,0 +1,10 @@
+input SubmitQuizInput {
+  quizzes: [SubmitQuizItemInput!]! # Required, non-null list
+  lessonId: Int! # Required integer
+  studentId: Int! # Required integer
+}
+
+input SubmitQuizItemInput {
+  quizzId: Int! # Required integer
+  quizAnswers: String! # Required string
+}

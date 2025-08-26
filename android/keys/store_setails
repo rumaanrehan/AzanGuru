@@ -1,0 +1,5 @@
+Alias: AzanGuru
+Pass: AzanGuru!21!$597(!
+
+
+$ keytool -export -rfc -keystore upload-keystore.jks -alias upload -file upload_certificate.pem
