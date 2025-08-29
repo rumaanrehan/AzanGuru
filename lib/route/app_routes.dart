@@ -29,6 +29,7 @@ import 'package:get/get.dart';
 import 'package:azan_guru_mobile/ui/splash/splash_screen.dart';
 import 'package:azan_guru_mobile/ui/course_module/course_selection_screen.dart';
 import 'package:azan_guru_mobile/ui/course_module/course_screen.dart';
+import 'package:azan_guru_mobile/ui/my_course/my_course_page.dart';
 
 
 class AppPages {
@@ -153,6 +154,10 @@ class AppPages {
       name: Routes.course,
       page: () => const CourseScreen(),
     ),
+    GetPage(
+      name: Routes.myCourses,
+      page: () => const MyCoursePage(),
+    ),
   ];
 }
 
@@ -187,5 +192,5 @@ class Routes {
   static const splash = '/splash';
   static const selectCourse = '/selectCourse';
   static const course = '/course';
-
+  static const String myCourses = '/my-courses';
 }

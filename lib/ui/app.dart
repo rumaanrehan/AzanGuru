@@ -23,7 +23,11 @@ import 'package:overlay_support/overlay_support.dart' show OverlaySupport;
 import 'package:app_links/app_links.dart';
 import 'package:azan_guru_mobile/ui/splash/splash_screen.dart';
 import 'package:azan_guru_mobile/ui/force_update_screen.dart';
-import 'package:azan_guru_mobile/main.dart'; // Required for navigatorKey
+//import 'package:azan_guru_mobile/main.dart'; // Required for navigatorKey
+
+// use your existing LoginBloc + login model
+import 'package:azan_guru_mobile/bloc/lrf_module/login_module/login_bloc.dart';
+import 'package:azan_guru_mobile/ui/model/mdl_login_param.dart';
 
 
 
@@ -82,23 +86,39 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       // Get the initial deep link
       final Uri? initialUri = await appLinks.getInitialAppLink();
       if (initialUri != null) {
-        handleLink(initialUri.toString());
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          handleLink(initialUri.toString());
+        });
       }
     } catch (e) {
       debugPrint('Error retrieving initial link: $e');
     }
 
     // Listen to deep link changes
-    appLinks.uriLinkStream.listen(
+    // appLinks.uriLinkStream.listen(
+    //   (Uri? uri) {
+    //     if (uri != null) {
+    //       handleLink(uri.toString());
+    //     }
+    //   },
+    //   onError: (err) {
+    //     debugPrint('Error in deep link stream: $err');
+    //   },
+    // );
+    // Listen to deep link changes
+    _sub = appLinks.uriLinkStream.listen(
       (Uri? uri) {
         if (uri != null) {
-          handleLink(uri.toString());
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            handleLink(uri.toString());
+          });
         }
       },
       onError: (err) {
         debugPrint('Error in deep link stream: $err');
       },
     );
+
   }
 
   /// Handles the incoming URL links targeting the application.
@@ -109,25 +129,120 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   /// other hosts, or unsupported URL schemes, it logs a corresponding message.
   ///
   /// [link] The URL link as a string.
-  void handleLink(String link) {
-    // Parse the URL from the provided link string.
-    Uri uri = Uri.parse(link);
+  void handleLink(String link) async {
+    final uri = Uri.parse(link);
 
-    // Check if the URL's scheme is HTTP or HTTPS.
+    // 1) Our custom deep link from Thank You page
+    if (uri.scheme == 'azanguru' && uri.host == 'auth' && uri.path == '/complete') {
+      final email = uri.queryParameters['email'];
+      final phone = uri.queryParameters['phone']; // phone used as password
+
+      if (email == null || phone == null) {
+        debugPrint('Deep link missing email/phone.');
+        return;
+      }
+
+      await _autoLoginFromDeepLink(email: email, password: phone);
+      return;
+    }
+
+    // 2) Keep your existing http/https behavior
     if (uri.scheme == 'http' || uri.scheme == 'https') {
-      // Further check if the host is 'azanguru.com'.
       if (uri.host == 'azanguru.com') {
         debugPrint('Redirecting to main screen for $uri');
-        _initMainScreen(); // Initialize the main screen for the specific host.
+        _initMainScreen();
       } else {
-        // Log for any other hosts with HTTP or HTTPS schemes.
         debugPrint('Unknown Host $uri');
       }
-    } else {
-      // Log for unsupported URL schemes.
-      debugPrint('Unsupported scheme: ${uri.scheme}');
+      return;
+    }
+
+    debugPrint('Unsupported scheme: ${uri.scheme}');
+  }
+
+
+  Future<void> _autoLoginFromDeepLink({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // If already logged in → go to My Courses tab
+      final alreadyLoggedIn = StorageManager.instance.getBool(LocalStorageKeys.prefUserLogin) == true;
+      if (alreadyLoggedIn) {
+        Get.offAllNamed(Routes.tabBarPage, arguments: 1);
+        return;
+      }
+
+      // Ensure we read LoginBloc from the tree that actually provides it
+      BuildContext? ctx = Get.key.currentContext;
+      if (ctx == null) {
+        // Give the tree a moment to mount
+        await Future.delayed(const Duration(milliseconds: 50));
+        ctx = Get.key.currentContext;
+      }
+
+      LoginBloc? loginBloc;
+      if (ctx != null) {
+        try {
+          loginBloc = ctx.read<LoginBloc>();
+        } catch (_) {
+          // If still not found, wait once more (cold start edge)
+          await Future.delayed(const Duration(milliseconds: 50));
+          loginBloc = Get.key.currentContext?.read<LoginBloc>();
+        }
+      }
+
+      // Fallback: if provider still not available, create a temporary bloc just for this login
+      loginBloc ??= LoginBloc();
+
+      // Wait for success/error
+      final completer = Completer<bool>();
+      late final StreamSubscription sub;
+      sub = loginBloc.stream.listen((state) {
+        if (state is LoginSuccessState) {
+          completer.complete(true);
+          sub.cancel();
+        } else if (state is LoginErrorState) {
+          completer.complete(false);
+          sub.cancel();
+        }
+      });
+
+      // Dispatch login
+      loginBloc.add(UserLoginEvent(
+        mdlLoginParam: MDLLoginParam(userName: email, password: password),
+      ));
+
+      final ok = await completer.future;
+
+      if (ok) {
+        // Deep-link success → go straight to My Courses
+        Get.offAllNamed(Routes.tabBarPage, arguments: 1);
+      } else {
+        // Fallback → open Login with prefill + flag
+        Get.toNamed(
+          Routes.login,
+          arguments: {
+            'prefillEmail': email,
+            'prefillPassword': password,
+            'fromDeepLink': true, // so LoginPage routes to My Courses on success
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('Auto login failed: $e');
+      Get.toNamed(
+        Routes.login,
+        arguments: {
+          'prefillEmail': email,
+          'prefillPassword': password,
+          'fromDeepLink': true,
+        },
+      );
     }
   }
+
+
 
   initFcm() async {
     metaSdk.setAdvertiserTracking(enabled: true);
@@ -189,6 +304,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             // Set up the bloc providers for the app.
             providers: [
               BlocProvider(
+                create: (_) => LoginBloc(),
+              ),
+              BlocProvider(
                 // Create a bloc provider for the player bloc.
                 create: (_) {
                   return PlayerBloc(player: AudioPlayer());
@@ -222,7 +340,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             ],
             // Build the app widget with the necessary bloc providers.
             child: GetMaterialApp(
-              navigatorKey: navigatorKey,
+              //navigatorKey: navigatorKey,
               home: widget.forceUpdate ? const ForceUpdateScreen() : SplashScreen(),
 
               // Set the app's text direction to left-to-right.
@@ -234,7 +352,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               // Disable app logging.
               enableLog: false,
               // Set the navigator key for the app.
-              //navigatorKey: Get.key,
+              navigatorKey: Get.key,
               // Set the initial route for the app.
               //initialRoute: _initMainScreen(),
               // Set the navigator observers for the app.

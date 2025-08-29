@@ -3,6 +3,7 @@ import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart'; // <-- NEW
 
 class AGWebViewPage extends StatefulWidget {
   const AGWebViewPage({super.key});
@@ -12,9 +13,6 @@ class AGWebViewPage extends StatefulWidget {
 }
 
 class _AGWebViewPageState extends State<AGWebViewPage> {
-  // https://staging.azanguru.com/student-rec/?student_id=32
-  // String get paymentUrl =>
-  //     '${baseUrl}student-rec/?student_id=${user?.databaseId.toString()}';
   late final WebViewController _controller;
   String url = '';
   bool isLoading = true;
@@ -25,23 +23,59 @@ class _AGWebViewPageState extends State<AGWebViewPage> {
     if (Get.arguments is String) {
       url = Get.arguments as String;
     }
+
     _controller = WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onPageStarted: (value) {
-                setState(() => isLoading = true);
-                debugPrint("PAYMENT onPageStarted: $value");
-              },
-              onPageFinished: (value) {
-                setState(() => isLoading = false);
-              },
-              onWebResourceError: (error) {
-                debugPrint('WebView error: ${error.description}');
-              },
-            ),
-          )
-          ..loadRequest(Uri.parse(url));
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          // KEY: intercept deep links / non-http(s) before WebView tries to load them
+          onNavigationRequest: (NavigationRequest request) async {
+            final url = request.url;
+
+            // Handle our deep link
+            if (url.startsWith('azanguru://')) {
+              final uri = Uri.parse(url);
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+              if (mounted) Get.back(); // close WebView
+              return NavigationDecision.prevent;
+            }
+
+            // Handle other custom schemes
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+              final uri = Uri.parse(url);
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+              return NavigationDecision.prevent;
+            }
+
+            return NavigationDecision.navigate;
+          },
+
+          onPageStarted: (value) {
+            setState(() => isLoading = true);
+            debugPrint("PAYMENT onPageStarted: $value");
+          },
+          onPageFinished: (value) {
+            setState(() => isLoading = false);
+          },
+          onWebResourceError: (error) {
+            debugPrint('WebView error: ${error.description}');
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(url));
+  }
+
+  bool _isHttpLike(String u) =>
+      u.startsWith('http://') || u.startsWith('https://');
+
+  Future<void> _openExternally(String u) async {
+    final uri = Uri.parse(u);
+    // Try opening with external application (so Android/iOS handle the intent)
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint('Cannot launch: $u');
+    }
   }
 
   @override
@@ -59,13 +93,12 @@ class _AGWebViewPageState extends State<AGWebViewPage> {
               child: Stack(
                 children: <Widget>[
                   WebViewWidget(controller: _controller),
-                  isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.appBgColor,
-                          ),
-                        )
-                      : const Stack(),
+                  if (isLoading)
+                    Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.appBgColor,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -84,7 +117,7 @@ class _AGWebViewPageState extends State<AGWebViewPage> {
         Get.back();
       },
       backgroundColor: AppColors.appBgColor,
-      suffixIcons: [],
+      suffixIcons: const [],
     );
   }
 }

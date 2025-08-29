@@ -33,7 +33,7 @@ class _AGBannerAdState extends State<AGBannerAd> {
       final hasSubscription = StorageManager.instance.getBool('isUserHasSubscription');
       final hasPurchase = StorageManager.instance.getBool('isCoursePurchased');
 
-      if (user != null && hasSubscription) {
+      if (user != null && hasSubscription || user != null && hasPurchase) {
         setState(() => _shouldShowAd = false);
         return;
       }

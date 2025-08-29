@@ -21,6 +21,8 @@ import 'package:azan_guru_mobile/ui/common/course_tile.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:azan_guru_mobile/common/util.dart'; // <-- for baseUrl, user (as used elsewhere)
 
+import 'package:video_player/video_player.dart';
+
 class CourseScreenArgs {
   final bool isKids;
   final String heading;
@@ -64,6 +66,24 @@ class _CourseScreenState extends State<CourseScreen> {
     super.initState();
     _homeBloc.add(GetCategoriesEvent());
   }
+
+  void _handleCourseTap(String? courseId) async {
+    if (courseId == null) return;
+
+    if (!AGLoader.isShown) {
+      AGLoader.show(context);
+    }
+
+    // tiny delay so the loader renders before navigation starts
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    Get.toNamed(
+      Routes.courseDetailPage,
+      arguments: courseId,
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +130,17 @@ class _CourseScreenState extends State<CourseScreen> {
                   padding:
                   EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
                   children: [
-                    _ExplainerVideoPlaceholder(isKids: args.isKids),
+                    SizedBox(height: 20.h),
+
+                    // NEW (use your *direct* Bunny links here)
+                    ExplainerVideoNative(
+                      isKids: args.isKids,
+                      adultSrc: 'https://vz-a554f220-6c6.b-cdn.net/98ba33ce-dfc9-4306-b94d-609e0f1e40b4/playlist.m3u8',
+                      kidsSrc:  'https://vz-a554f220-6c6.b-cdn.net/895d18e1-fa3a-431c-8818-49c5a63a28ed/playlist.m3u8',
+                      autoPlay: false,
+                    ),
+
+
                     SizedBox(height: 20.h),
 
                     Text(
@@ -145,12 +175,7 @@ class _CourseScreenState extends State<CourseScreen> {
                             padding: EdgeInsets.only(bottom: 12.h),
                             child: CourseTile(
                               mdlCourse: course,
-                              onTap: () {
-                                Get.toNamed(
-                                  Routes.courseDetailPage,
-                                  arguments: course?.id,
-                                );
-                              },
+                              onTap: () => _handleCourseTap(course?.id),
                             ),
                           ),
                         )
@@ -336,37 +361,127 @@ class _CourseScreenState extends State<CourseScreen> {
   }
 }
 
-class _ExplainerVideoPlaceholder extends StatelessWidget {
-  const _ExplainerVideoPlaceholder({required this.isKids});
+class ExplainerVideoNative extends StatefulWidget {
+  const ExplainerVideoNative({
+    super.key,
+    required this.isKids,
+    required this.adultSrc, // direct HLS/MP4
+    required this.kidsSrc,  // direct HLS/MP4
+    this.autoPlay = false,
+  });
+
   final bool isKids;
+  final String adultSrc;
+  final String kidsSrc;
+  final bool autoPlay;
+
+  @override
+  State<ExplainerVideoNative> createState() => _ExplainerVideoNativeState();
+}
+
+class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
+  VideoPlayerController? _controller;
+  bool _initialized = false;
+  bool _hadError = false;
+
+  String get _src => widget.isKids ? widget.kidsSrc : widget.adultSrc;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // IMPORTANT: use networkUrl ctor for newer video_player
+    _controller = VideoPlayerController.networkUrl(Uri.parse(_src))
+      ..setLooping(false)
+      ..initialize().then((_) async {
+        if (!mounted) return;
+        setState(() => _initialized = true);
+        if (widget.autoPlay) {
+          await _controller!.play();
+        }
+      }).catchError((_) {
+        if (!mounted) return;
+        setState(() => _hadError = true);
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // 16:9 area with rounded corners
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.r),
+        child: _hadError
+            ? _errorBox()
+            : (!_initialized || _controller == null)
+            ? _loadingBox()
+            : Stack(
+          fit: StackFit.expand,
           children: [
-            const Icon(Icons.play_circle_outline, size: 56),
-            const SizedBox(height: 8),
-            Text(
-              isKids ? 'Kids Explainer Video' : 'Adults Explainer Video',
-              style: AppFontStyle.poppinsSemiBold.copyWith(fontSize: 15.sp),
+            FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _controller!.value.size.width,
+                height: _controller!.value.size.height,
+                child: VideoPlayer(_controller!),
+              ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Replace with your video player (YouTube/Chewie)',
-              style: AppFontStyle.poppinsRegular.copyWith(fontSize: 12.sp),
+            // very simple play/pause overlay
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                if (_controller!.value.isPlaying) {
+                  _controller!.pause();
+                } else {
+                  _controller!.play();
+                }
+                setState(() {});
+              },
+              child: Align(
+                alignment: Alignment.center,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _controller!.value.isPlaying ? 0.0 : 1.0,
+                  child: Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 48.r,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _loadingBox() => Container(
+    color: Colors.black,
+    alignment: Alignment.center,
+    child: const CircularProgressIndicator(),
+  );
+
+  Widget _errorBox() => Container(
+    color: Colors.black,
+    alignment: Alignment.center,
+    child: const Text(
+      'Video unavailable',
+      style: TextStyle(color: Colors.white),
+    ),
+  );
 }

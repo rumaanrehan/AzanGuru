@@ -28,6 +28,44 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final LoginBloc loginBloc = LoginBloc();
+  bool fromDeepLink = false;
+  @override
+  void initState() {
+    super.initState();
+
+    // Read values passed from deep link fallback:
+    // Get.toNamed(Routes.login, arguments: { 'prefillEmail': ..., 'prefillPassword': ... });
+    final args = Get.arguments;
+
+    fromDeepLink = args is Map && args['fromDeepLink'] == true;
+
+    if (args is Map) {
+      final email = args['prefillEmail'] as String?;
+      final pass  = args['prefillPassword'] as String?;
+
+      if (email != null && email.isNotEmpty) {
+        _nameController.text = email;
+      }
+      if (pass != null && pass.isNotEmpty) {
+        _passwordController.text = pass;
+      }
+
+      // OPTIONAL: auto-submit if both are present
+      Future.microtask(_submitLogin);
+    }
+  }
+
+  void _submitLogin() {
+    hideKeyboard(context);
+    loginBloc.add(
+      UserLoginEvent(
+        mdlLoginParam: MDLLoginParam(
+          userName: _nameController.text.trim(),
+          password: _passwordController.text.trim(),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +81,21 @@ class _LoginPageState extends State<LoginPage> {
       bloc: loginBloc,
       listener: (context, state) {
         if (state is LoginLoadingState) {
-          AGLoader.show(context);
+          if (mounted) AGLoader.show(context);
         } else if (state is LoginErrorState) {
-          AGLoader.hide();
+          if (mounted) AGLoader.hide();
           showNormalDialog(context, state.errorMessage.toString());
         } else if (state is LoginSuccessState) {
-          AGLoader.hide();
-          //Get.offAllNamed(Routes.tabBarPage);
-          Get.offAllNamed(Routes.selectCourse);
+          if (mounted) AGLoader.hide();
+
+          final hasSub = StorageManager.instance.getBool('isUserHasSubscription') ?? false;
+          final hasPurchase = StorageManager.instance.getBool('isCoursePurchased') ?? false;
+
+          if (fromDeepLink || hasPurchase || hasSub) {
+            Get.offAllNamed(Routes.tabBarPage, arguments: 1);
+          } else {
+            Get.offAllNamed(Routes.selectCourse);
+          }
         }
       },
       builder: (context, state) {
@@ -112,33 +157,14 @@ class _LoginPageState extends State<LoginPage> {
                             hintTexts: LanguageKey.password.tr,
                             suffixIconShow: true,
                             obscureText: true,
-                            onFieldSubmitted: (val) {
-                              loginBloc.add(
-                                UserLoginEvent(
-                                  mdlLoginParam: MDLLoginParam(
-                                    userName: _nameController.text.trim(),
-                                    password: _passwordController.text.trim(),
-                                  ),
-                                ),
-                              );
-                            },
+                            onFieldSubmitted: (_) => _submitLogin(),
                           ),
                         ),
                         SizedBox(height: 5.h),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 56.w),
                           child: customButton(
-                            onTap: () {
-                              hideKeyboard(context);
-                              loginBloc.add(
-                                UserLoginEvent(
-                                  mdlLoginParam: MDLLoginParam(
-                                    userName: _nameController.text.trim(),
-                                    password: _passwordController.text.trim(),
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: _submitLogin,
                             buttonText: LanguageKey.loginNow.tr,
                           ),
                         ),
@@ -285,4 +311,11 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
 }

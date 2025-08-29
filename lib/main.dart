@@ -21,6 +21,8 @@ import 'package:azan_guru_mobile/entities/app_version.dart'; // (You’ll create
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+//import 'package:azan_guru_mobile/service/deep_link_service.dart';
+
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -63,8 +65,12 @@ Future<void> main() async {
     );
     final needsUpdate = await isUpdateRequired(client);
 
+
     /// 🔁 Run the app with update condition
-    runApp(App(forceUpdate: needsUpdate));
+    runApp(App(
+      forceUpdate: needsUpdate,
+    ));
+
   }, (Object error, StackTrace stack) {
     debugPrint(error.toString());
   });

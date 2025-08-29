@@ -158,7 +158,7 @@ class _MenuPageState extends State<MenuPage> {
                                 Get.toNamed(Routes.settingPage);
                                 break;
                               case SettingOptionType.callUs:
-                                openCallingApp('tel:+91 8950914110');
+                                openCallingApp('tel:+91 7419223123');
                                 break;
                               case SettingOptionType.myProfile:
                                 Get.toNamed(Routes.myProfile);
