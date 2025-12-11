@@ -31,6 +31,8 @@ import 'package:azan_guru_mobile/ui/course_module/course_selection_screen.dart';
 import 'package:azan_guru_mobile/ui/course_module/course_screen.dart';
 import 'package:azan_guru_mobile/ui/my_course/my_course_page.dart';
 
+import 'package:flutter/material.dart';
+
 
 class AppPages {
   static final routes = [

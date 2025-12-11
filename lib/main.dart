@@ -25,6 +25,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 
 /// Runs the main application.
 Future<void> main() async {

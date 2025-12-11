@@ -121,8 +121,7 @@ class _HomePageState extends State<HomePage> {
           ),
 
           // Header bar
-          Container
-            (
+          Container(
             color: const Color(0xFF4D8974),
             padding: EdgeInsets.only(
               left: 20.w,
@@ -132,52 +131,36 @@ class _HomePageState extends State<HomePage> {
             ),
             child: SizedBox(
               height: 48.h,
-              child: Stack(
-                alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // 👈 evenly spread items
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Left: Back + Home
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () => Get.back(),
+                  // Left: Home button
+                  _headerIcon(
+                    context: context,
+                    icon: Icons.home_rounded,
+                    onTap: () => Get.offAllNamed(Routes.tabBarPage),
+                  ),
+
+                  // Center: Bismillah text
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        "﷽",
+                        textAlign: TextAlign.center,
+                        style: AppFontStyle.dmSansRegular.copyWith(
+                          fontSize: 22.5.sp,
+                          color: Colors.white,
                         ),
-                        SizedBox(width: 16.w),
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.home_rounded,
-                          onTap: () => Get.offAllNamed(Routes.tabBarPage),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
 
-                  // Right: Basmala + Menu
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "﷽",
-                          textAlign: TextAlign.right,
-                          style: AppFontStyle.dmSansRegular.copyWith(
-                            fontSize: 22.5.sp,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.menu_rounded,
-                          onTap: () => Get.toNamed(Routes.menuPage),
-                        ),
-                      ],
-                    ),
+                  // Right: Menu button
+                  _headerIcon(
+                    context: context,
+                    icon: Icons.menu_rounded,
+                    onTap: () => Get.toNamed(Routes.menuPage),
                   ),
                 ],
               ),

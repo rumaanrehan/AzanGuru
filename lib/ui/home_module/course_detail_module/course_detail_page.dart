@@ -594,7 +594,7 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                           Row(
                             children: [
                               Text(
-                                isMonthlyCourse ? '999' : 'FREE',
+                                isMonthlyCourse ? '999' : '999',
                                 style: AppFontStyle.poppinsBold.copyWith(
                                   fontSize: 22.sp,
                                   color: AppColors.cardTextColor,
@@ -602,7 +602,7 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                               ),
                               SizedBox(width: 5.w),
                               Text(
-                                isMonthlyCourse ? '' : '999',
+                                isMonthlyCourse ? '' : '2499',
                                 style: AppFontStyle.poppinsRegular.copyWith(
                                   fontSize: 22.sp,
                                   decoration: TextDecoration.lineThrough,
@@ -611,7 +611,7 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                               ),
                               SizedBox(width: 10.w),
                               Text(
-                                isMonthlyCourse ? 'Monthly' : 'For 3 Months',
+                                isMonthlyCourse ? 'Monthly' : 'For 6 Months',
                                 style: AppFontStyle.poppinsRegular.copyWith(
                                   fontSize: 12.sp,
                                   color: AppColors.cardTextColor,

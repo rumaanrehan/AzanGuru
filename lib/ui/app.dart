@@ -29,6 +29,8 @@ import 'package:azan_guru_mobile/ui/force_update_screen.dart';
 import 'package:azan_guru_mobile/bloc/lrf_module/login_module/login_bloc.dart';
 import 'package:azan_guru_mobile/ui/model/mdl_login_param.dart';
 
+import 'package:azan_guru_mobile/common/route_observer.dart';
+
 
 
 
@@ -356,7 +358,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
               // Set the initial route for the app.
               //initialRoute: _initMainScreen(),
               // Set the navigator observers for the app.
-              navigatorObservers: [RouteChangeObserver()],
+              navigatorObservers: [routeObserver],
               // Set the app's routes.
               getPages: AppPages.routes,
               // Set the app's locale.

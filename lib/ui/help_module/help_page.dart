@@ -10,6 +10,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+// advertisement related imports
+import 'package:google_mobile_ads/google_mobile_ads.dart' show AdSize;
+import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
+
 
 class HelpPage extends StatefulWidget {
   const HelpPage({super.key});
@@ -70,6 +74,12 @@ class _HelpPageState extends State<HelpPage> {
                   return _listTile(data);
                 }
               },
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.h),
+              child: AGBannerAd(adSize: AdSize.mediumRectangle),
             ),
           ),
         ],
