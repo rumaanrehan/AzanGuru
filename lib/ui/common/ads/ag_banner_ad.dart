@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/common/util.dart';
 
 
 class AGBannerAd extends StatefulWidget {
@@ -19,6 +23,8 @@ class _AGBannerAdState extends State<AGBannerAd> {
   bool _isBannerAdReady = false;
   bool _shouldShowAd = true;
   int _pollAttempts = 0;
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
 
   @override
   void initState() {
@@ -30,8 +36,8 @@ class _AGBannerAdState extends State<AGBannerAd> {
     /// Poll up to 20 times every 100ms (max 2s wait) until values are ready.
     while (_pollAttempts < 20) {
       final user = StorageManager.instance.getLoginUser();
-      final hasSubscription = StorageManager.instance.getBool('isUserHasSubscription');
-      final hasPurchase = StorageManager.instance.getBool('isCoursePurchased');
+      final hasSubscription = StorageManager.instance.getBool(LocalStorageKeys.isUserHasSubscription);
+      final hasPurchase = StorageManager.instance.getBool(LocalStorageKeys.isCoursePurchased);
 
       if (user != null && hasSubscription || user != null && hasPurchase) {
         setState(() => _shouldShowAd = false);
@@ -70,7 +76,7 @@ class _AGBannerAdState extends State<AGBannerAd> {
     const baseUrl = 'https://azanguru.com/';
 
     final url =
-        '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=10'
+        '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=10&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView'
         '${user != null ? '&student_id=${user.databaseId}' : ''}';
 
     showDialog(
@@ -114,8 +120,8 @@ class _AGBannerAdState extends State<AGBannerAd> {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.of(context).pop(); // close the dialog
-                    Get.toNamed(Routes.agWebViewPage, arguments: url);
+                    Navigator.of(context).pop();                    debugPrint('url===> $url');
+                    launchUrlInExternalBrowser(url);
                   },
                   child: const Text(
                     "Subscribe Now →",
@@ -157,31 +163,40 @@ class _AGBannerAdState extends State<AGBannerAd> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_shouldShowAd || !_isBannerAdReady || _bannerAd == null) {
-      return const SizedBox.shrink();
-    }
+    return BlocBuilder<MyCourseBloc, MyCourseState>(
+      builder: (context, state) {
+        bool isPurchased = false;
+        if (state is GetMyCourseState && (state.nodes?.isNotEmpty ?? false)) {
+          isPurchased = true;
+        }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Center(
-          child: Container(
-            width: _bannerAd!.size.width.toDouble(),
-            height: _bannerAd!.size.height.toDouble(),
-            child: AdWidget(ad: _bannerAd!),
-          ),
-        ),
-        TextButton(
-          onPressed: _showRemoveAdsDialog,
-          child: const Text(
-            'Remove Ads?',
-            style: TextStyle(
-              fontSize: 14,
-              decoration: TextDecoration.underline,
+        if (isPurchased || !_shouldShowAd || !_isBannerAdReady || _bannerAd == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              ),
             ),
-          ),
-        ),
-      ],
+            TextButton(
+              onPressed: _showRemoveAdsDialog,
+              child: const Text(
+                'Remove Ads?',
+                style: TextStyle(
+                  fontSize: 14,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

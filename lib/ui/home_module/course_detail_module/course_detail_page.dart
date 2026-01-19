@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:azan_guru_mobile/bloc/course_detail_bloc/course_detail_bloc.dart';
+import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_assets.dart';
@@ -14,6 +15,8 @@ import 'package:azan_guru_mobile/ui/help_module/ask_live_teacher_dialog.dart';
 import 'package:azan_guru_mobile/ui/model/ag_course_detail.dart';
 import 'package:azan_guru_mobile/ui/model/ag_lesson_list.dart';
 import 'package:azan_guru_mobile/ui/model/course_amount_response_model.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,32 +66,69 @@ class _CourseDetailPageState extends State<CourseDetailPage>
   bool isCoursePurchased = false;
   final ScrollController _scrollController = ScrollController();
 
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
+
   Future<void> launchUrlInBrowser(String url) async {
-    debugPrint('URL: $url');
-    var isValidUrl = await canLaunchUrl(Uri.parse(url));
-    if (isValidUrl) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(url);
   }
 
   @override
   void initState() {
     super.initState();
     if (Get.arguments is String) {
-      var data = Get.arguments as String;
-      courseId = data;
-      bloc.add(GetCourseDetailEvent(courseId: courseId));
+      courseId = Get.arguments as String;
     } else if (Get.arguments is List) {
       var list = Get.arguments as List;
       courseId = list[0].toString();
-      studentProgress = list[1];
-      // studentCompletedLessons = list[2];
+      // Optional: keep these for immediate UI update, but bloc will override if needed
+      studentProgress = list[1].toDouble();
       isCoursePurchased = list[3];
+    }
+
+    if (courseId != null) {
       bloc.add(GetCourseDetailEvent(courseId: courseId));
     }
+
+    // Trigger refresh of course list if logged in to ensure status is up to date
+    if (isUserLoggedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<MyCourseBloc>().add(GetMyCourseEvent());
+      });
+    }
+
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  void _checkPurchaseStatus(MyCourseState state) {
+    if (state is GetMyCourseState && state.nodes != null) {
+      bool found = false;
+      double progress = 0;
+      for (var courseList in state.nodes!) {
+        if (courseList.mdlCourse != null) {
+          for (var course in courseList.mdlCourse!) {
+            if (course.id == courseId) {
+              found = true;
+              progress = courseList.studentProgress ?? 0;
+              break;
+            }
+          }
+        }
+        if (found) break;
+      }
+      
+      if (isCoursePurchased != found || studentProgress != progress) {
+        setState(() {
+          isCoursePurchased = found;
+          studentProgress = progress;
+        });
+        
+        // If status changed to purchased, ensure lessons are updated
+        if (isCoursePurchased && agCourseLessonList != null) {
+          updateCurrentSelectedLesson();
+        }
+      }
+    }
   }
 
   @override
@@ -117,7 +157,15 @@ class _CourseDetailPageState extends State<CourseDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<CourseDetailBloc, CourseDetailState>(
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<MyCourseBloc, MyCourseState>(
+          listener: (context, state) {
+            _checkPurchaseStatus(state);
+          },
+        ),
+      ],
+      child: BlocConsumer<CourseDetailBloc, CourseDetailState>(
       listener: (context, state) {
         if (state is ShowCourseDetailLoadingState) {
           if (!AGLoader.isShown) {
@@ -208,57 +256,60 @@ class _CourseDetailPageState extends State<CourseDetailPage>
           },
           child: Scaffold(
             backgroundColor: AppColors.bgLightWhitColor,
-            bottomNavigationBar: Padding(
-              padding: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 20.h),
-              child: isCoursePurchased
-                  ? customButton(
-                      onTap: ((agCourseLessonList?.agCourses?.nodes ?? [])
-                                  .isNotEmpty &&
-                              currentSelectedLesson != null)
-                          ? () {
-                              // context.read<VideoBloc>().add(PauseVideo());
-                              _controller?.pause();
-                              if (_chewieController != null) {
-                                _chewieController?.pause();
-                              }
-                              List<Lesson>? lessonList =
-                                  agCourseLessonList?.agCourses?.nodes ?? [];
-                              if (lessonList.isNotEmpty &&
-                                  currentSelectedLesson != null) {
-                                Lesson? lesson = currentSelectedLesson;
-                                Get.toNamed(
-                                  Routes.lessonDetailPage,
-                                  arguments: [
-                                    courseData,
-                                    lesson?.completed ?? false,
-                                    notCompletedLesson
-                                  ],
-                                  parameters: {
-                                    "id": lesson?.id ?? '',
-                                  },
-                                );
-                              }
-                            }
-                          : notCompletedLesson == 0 &&
-                                  (agCourseLessonList?.agCourses?.nodes ?? [])
-                                      .isNotEmpty
-                              ? () {
-                                  Get.toNamed(Routes.courseCompleteSuccessPage);
+            bottomNavigationBar: SafeArea(
+              bottom: true,
+              child: Padding(
+                padding: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 20.h),
+                child: isCoursePurchased
+                    ? customButton(
+                        onTap: ((agCourseLessonList?.agCourses?.nodes ?? [])
+                                    .isNotEmpty &&
+                                currentSelectedLesson != null)
+                            ? () {
+                                // context.read<VideoBloc>().add(PauseVideo());
+                                _controller?.pause();
+                                if (_chewieController != null) {
+                                  _chewieController?.pause();
                                 }
-                              : null,
-                      boxColor: AppColors.alertButtonColor,
-                      child: Text(
-                        notCompletedLesson == 0 && isCoursePurchased
-                            ? "Certificate"
-                            : 'Start Lesson',
-                        textAlign: TextAlign.center,
-                        style: AppFontStyle.dmSansBold.copyWith(
-                          color: AppColors.white,
-                          fontSize: 17.sp,
+                                List<Lesson>? lessonList =
+                                    agCourseLessonList?.agCourses?.nodes ?? [];
+                                if (lessonList.isNotEmpty &&
+                                    currentSelectedLesson != null) {
+                                  Lesson? lesson = currentSelectedLesson;
+                                  Get.toNamed(
+                                    Routes.lessonDetailPage,
+                                    arguments: [
+                                      courseData,
+                                      lesson?.completed ?? false,
+                                      notCompletedLesson
+                                    ],
+                                    parameters: {
+                                      "id": lesson?.id ?? '',
+                                    },
+                                  );
+                                }
+                              }
+                            : notCompletedLesson == 0 &&
+                                    (agCourseLessonList?.agCourses?.nodes ?? [])
+                                        .isNotEmpty
+                                ? () {
+                                    Get.toNamed(Routes.courseCompleteSuccessPage);
+                                  }
+                                : null,
+                        boxColor: AppColors.alertButtonColor,
+                        child: Text(
+                          notCompletedLesson == 0 && isCoursePurchased
+                              ? "Certificate"
+                              : 'Start Lesson',
+                          textAlign: TextAlign.center,
+                          style: AppFontStyle.dmSansBold.copyWith(
+                            color: AppColors.white,
+                            fontSize: 17.sp,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
+                      )
+                    : null,
+              ),
             ),
             body: Stack(
               children: [
@@ -280,6 +331,7 @@ class _CourseDetailPageState extends State<CourseDetailPage>
           ),
         );
       },
+    ),
     );
   }
 
@@ -634,6 +686,17 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                           visible: !isCoursePurchased,
                           child: customButton(
                             onTap: () {
+                              /// 🔹 CHECK LOGIN
+                              final isUserLoggedIn = user != null;
+
+                              if (!isUserLoggedIn) {
+                                Get.toNamed(Routes.login);
+                                StorageManager.instance.setBool(
+                                    LocalStorageKeys.prefGuestLogin, false);
+                                StorageManager.instance.clear();
+                                return;
+                              }
+
                               if (Platform.isIOS) {
                                 Get.toNamed(
                                   Routes.planPage,
@@ -644,15 +707,14 @@ class _CourseDetailPageState extends State<CourseDetailPage>
 
                                 if (isMonthlyCourse) {
                                   url =
-                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=$databaseId&student_id=${user?.databaseId}';
+                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView&ag_course_dropdown=$databaseId&student_id=${user?.databaseId}';
                                 } else {
                                   url =
-                                  '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$databaseId&student_id=${user?.databaseId.toString()}';
+                                  '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$databaseId&student_id=${user?.databaseId.toString()}&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
                                 }
                                 debugPrint('url===> $url');
-                                //launchUrlInBrowser(url);
-                                Get.toNamed(Routes.agWebViewPage, arguments: url);
-
+                                debugPrint('url===> $url');
+                                launchUrlInExternalBrowser(url);
                               }
                             },
                             boxColor: AppColors.alertButtonColor,
@@ -724,15 +786,15 @@ class _CourseDetailPageState extends State<CourseDetailPage>
                           ),
                         ),
                         courseContentView(),
-                      ],
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    ),
     );
   }
 

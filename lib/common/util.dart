@@ -24,6 +24,15 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import '../entities/app_version.dart';
 import '../graphQL/queries.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+Future<void> launchUrlInExternalBrowser(String url) async {
+  if (await canLaunchUrl(Uri.parse(url))) {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  } else {
+    debugPrint('Could not launch $url');
+  }
+}
 
 Future<bool> isUpdateRequired(GraphQLClient client) async {
   final result = await client.query(

@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -66,6 +68,9 @@ class _CourseScreenState extends State<CourseScreen> {
   final HomeBloc _homeBloc = HomeBloc();
   final List<MDLCourseList> adultCourses = [];
   final List<MDLCourseList> kidsCourses = [];
+
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
 
   @override
   void initState() {
@@ -202,6 +207,18 @@ class _CourseScreenState extends State<CourseScreen> {
                           ),
                         ),
                         onPressed: () {
+
+                          /// 🔹 CHECK LOGIN
+                          final isUserLoggedIn = user != null;
+
+                          if (!isUserLoggedIn) {
+                            Get.toNamed(Routes.login);
+                            StorageManager.instance.setBool(
+                                LocalStorageKeys.prefGuestLogin, false);
+                            StorageManager.instance.clear();
+                            return;
+                          }
+
                           // Find the first available course to use its ids
                           String? firstCourseId;
                           int? firstDatabaseId;
@@ -247,13 +264,13 @@ class _CourseScreenState extends State<CourseScreen> {
                             late final String url;
                             if (args.isKids) {
                               url =
-                              '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=$dbId&student_id=$studentId';
+                              '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=$dbId&student_id=$studentId&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
                             } else {
                               url =
-                              '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$dbId&student_id=$studentId';
+                              '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$dbId&student_id=$studentId&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
                             }
                             debugPrint('url===> $url');
-                            Get.toNamed(Routes.agWebViewPage, arguments: url);
+                            launchUrlInExternalBrowser(url);
                           }
                         },
                         child: Text(

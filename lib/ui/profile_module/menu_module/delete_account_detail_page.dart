@@ -176,27 +176,30 @@ class _DeleteAccountDetailPageState extends State<DeleteAccountDetailPage> {
   }
 
   Widget continueButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-      child: customButton(
-        onTap: () {
-          if (isSelected == true) {
-            bloc.add(UserAccountDeleteEvent());
-          } else {
-            Fluttertoast.showToast(
-              msg: 'Please accept over condition',
-              backgroundColor: Colors.black,
-              textColor: Colors.white,
-            );
-          }
-        },
-        boxColor: AppColors.appBgColor,
-        child: Text(
-          'Yes, Continue',
-          textAlign: TextAlign.center,
-          style: AppFontStyle.dmSansBold.copyWith(
-            color: AppColors.white,
-            fontSize: 17.sp,
+    return SafeArea(
+      bottom: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+        child: customButton(
+          onTap: () {
+            if (isSelected == true) {
+              bloc.add(UserAccountDeleteEvent());
+            } else {
+              Fluttertoast.showToast(
+                msg: 'Please accept over condition',
+                backgroundColor: Colors.black,
+                textColor: Colors.white,
+              );
+            }
+          },
+          boxColor: AppColors.appBgColor,
+          child: Text(
+            'Yes, Continue',
+            textAlign: TextAlign.center,
+            style: AppFontStyle.dmSansBold.copyWith(
+              color: AppColors.white,
+              fontSize: 17.sp,
+            ),
           ),
         ),
       ),

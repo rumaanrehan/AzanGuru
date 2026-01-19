@@ -40,11 +40,7 @@ class _PlanScreenState extends State<PlanScreen> {
   ProfileBloc profileBloc = ProfileBloc();
 
   openCallingApp(String uri) async {
-    Uri url = Uri.parse(uri);
-    if (await launchUrl(url)) {
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(uri);
   }
 
   @override

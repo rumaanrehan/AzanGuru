@@ -931,7 +931,7 @@ class _HomeWorkScreenState extends State<HomeWorkScreen>
             // chewieControllerList.map((e) => e.videoPlayerController.pause());
             String url =
                 '${baseUrl}student-rec/?student_id=${user?.databaseId.toString()}';
-            Get.toNamed(Routes.agWebViewPage, arguments: url);
+            launchUrlInExternalBrowser(url);
           },
           boxColor: AppColors.buttonColor,
           showBorder: true,

@@ -29,7 +29,7 @@ class UserData {
         authToken: json["authToken"],
         refreshToken: json["refreshToken"],
         error: json["error"],
-        databaseId: json["databaseId"],
+        databaseId: json["databaseId"]?.toString(),
         user: json["user"] == null ? null : User.fromJson(json["user"]),
       );
 

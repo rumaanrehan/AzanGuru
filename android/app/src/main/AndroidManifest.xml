@@ -71,11 +71,20 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Accepts URIs that begin with "azanguru://gizmos” -->
                 <data
                     android:scheme="azanguru"
                     android:host="auth"
                     android:path="/complete" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Accepts URIs that begin with "azanguru://mycourse" -->
+                <data
+                    android:scheme="azanguru"
+                    android:host="mycourse" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

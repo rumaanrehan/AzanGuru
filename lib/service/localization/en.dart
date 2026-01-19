@@ -3,7 +3,7 @@ import 'package:azan_guru_mobile/constant/language_key.dart';
 final Map<String, String> english = {
   LanguageKey.loginNow: "LOGIN NOW",
   LanguageKey.langTittle: "Select your \nPreferred Language",
-  LanguageKey.loginToAzan: "Login\nto AzanGuru",
+  LanguageKey.loginToAzan: "Login/Register\n to AzanGuru",
   LanguageKey.userNameOrEmail: "Email/User name",
   LanguageKey.password: "Password",
   LanguageKey.doNotHaveAccount: "Don’t have an account",

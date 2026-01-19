@@ -1,12 +1,15 @@
 import 'dart:io';
 
 import 'package:azan_guru_mobile/bloc/home_bloc/home_bloc.dart';
+import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 //import 'package:azan_guru_mobile/ui/common/course_tile.dart';
 //import 'package:azan_guru_mobile/ui/model/ag_categories_data.dart';
@@ -32,6 +35,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Silent fetch in background for HomePage
+    if (user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<MyCourseBloc>().add(GetMyCourseEvent());
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +75,7 @@ class _HomePageState extends State<HomePage> {
                               SizedBox(height: 28.h),
 
                               Text(
-                                "Select Learner.",
+                                "New Here? Buy Course!",
                                 textAlign: TextAlign.center,
                                 style: AppFontStyle.poppinsSemiBold.copyWith(
                                   fontSize: 20.sp,
@@ -171,6 +185,63 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildAccessPurchasedCourseBox() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4D8974), // Primary green background
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text("📖 Access Your Purchased Course",
+                  style: AppFontStyle.poppinsSemiBold.copyWith(
+                    fontSize: 16.sp,
+                    color: Colors.white,
+                  )),
+              const Spacer(),
+              const Icon(Icons.star_rounded, color: Color(0xFFFFD700), size: 20),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "Begin your journey! Go to 'My Courses' and start learning today.",
+            style: AppFontStyle.poppinsRegular.copyWith(
+              fontSize: 13.5.sp,
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+          SizedBox(height: 18.h),
+          customButton(
+            boxColor: const Color(0xFFddece7), // Reversed: light green CTA
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            onTap: () => Get.offAllNamed(Routes.tabBarPage, arguments: 1),
+            child: Center(
+              child: Text(
+                "Go to My Courses →",
+                style: AppFontStyle.poppinsBold.copyWith(
+                  //color: const Color(0xFF4D8974), // Dark green text in light button
+                  fontSize: 14.5.sp,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildIntroContent() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -257,17 +328,32 @@ class _HomePageState extends State<HomePage> {
 
           SizedBox(height: 20.h),
 
-          _resourceTileWithIcon(
-            title: "Listen Quran for Free",
-            iconPath: 'assets/images/listen.png',
-            onTap: () => Get.toNamed(Routes.listenQuran),
+          BlocBuilder<MyCourseBloc, MyCourseState>(
+            builder: (context, state) {
+              if (state is GetMyCourseState && (state.nodes?.isNotEmpty ?? false)) {
+                return Column(
+                  children: [
+                    _buildAccessPurchasedCourseBox(),
+                    SizedBox(height: 20.h),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-          SizedBox(height: 10.h),
-          _resourceTileWithIcon(
-            title: "Watch QTube — Free Quran Videos",
-            iconPath: 'assets/images/watch.png',
-            onTap: () => Get.toNamed(Routes.questionAnswerPage),
-          ),
+
+          // comment out listen quran and watch qtube as per user request
+          // _resourceTileWithIcon(
+          //   title: "Listen Quran for Free",
+          //   iconPath: 'assets/images/listen.png',
+          //   onTap: () => Get.toNamed(Routes.listenQuran),
+          // ),
+          // SizedBox(height: 10.h),
+          // _resourceTileWithIcon(
+          //   title: "Watch QTube — Free Quran Videos",
+          //   iconPath: 'assets/images/watch.png',
+          //   onTap: () => Get.toNamed(Routes.questionAnswerPage),
+          // ),
         ],
       ),
     );

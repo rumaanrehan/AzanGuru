@@ -323,10 +323,6 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   openCallingApp(String uri) async {
-    Uri mobileNumber = Uri.parse(uri);
-    if (await launchUrl(mobileNumber)) {
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: mobileNumber);
-    }
+    launchUrlInExternalBrowser(uri);
   }
 }

@@ -274,7 +274,7 @@ class _ChooseCoursePageState extends State<ChooseCoursePage> {
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
                     String url = 'https://azanguru.com/job-with-azanguru/';
-                    Get.toNamed(Routes.agWebViewPage, arguments: url);
+                    launchUrlInExternalBrowser(url);
                   },
               ),
             ],

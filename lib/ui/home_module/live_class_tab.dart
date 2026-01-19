@@ -18,6 +18,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 
 class LiveClassTab extends StatefulWidget {
   const LiveClassTab({super.key});
@@ -33,6 +35,9 @@ class _LiveClassTabState extends State<LiveClassTab> {
   bool get isUserLoggedIn => user != null;
   bool isCoursePurchased = false;
   bool isUserHasSubscription = false;
+
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
 
   @override
   void initState() {
@@ -129,10 +134,10 @@ class _LiveClassTabState extends State<LiveClassTab> {
     if (isUserLoggedIn && isUserHasSubscription) {
       String url = '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
       debugPrint('url===> $url');
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
+      launchUrlInExternalBrowser(url);
     } else if (isUserLoggedIn && isCoursePurchased && DateTime.now().weekday == DateTime.monday) {
       String url = '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
+      launchUrlInExternalBrowser(url);
     } else {
       showAlertDialog();
     }
@@ -199,9 +204,8 @@ class _LiveClassTabState extends State<LiveClassTab> {
                               );
                             } else {
                               String url =
-                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=10${user != null ? '&student_id=${user?.databaseId}' : ''}';
-                                Get.toNamed(Routes.agWebViewPage, arguments: url);
-                              //launchUrlInBrowser(url);
+                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView&ag_course_dropdown=10${user != null ? '&student_id=${user?.databaseId}' : ''}';
+                                launchUrlInExternalBrowser(url);
                             }
                           }
                         },
@@ -230,12 +234,7 @@ class _LiveClassTabState extends State<LiveClassTab> {
 
 
   Future<void> launchUrlInBrowser(String url) async {
-    var isValidUrl = await canLaunchUrl(Uri.parse(url));
-    if (isValidUrl) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(url);
   }
 
   static Widget _customButton({

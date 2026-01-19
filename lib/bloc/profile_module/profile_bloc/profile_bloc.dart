@@ -44,7 +44,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with ValidationMixin 
         } else {
           emit(ProfileLoadingState());
           String userId = user?.id ?? '';
-          graphQLService.initClient(addToken: user != null);
+          graphQLService.initClient();
           final result = await graphQLService.performMutation(
             AzanGuruQueries.updateUser,
             variables: {
@@ -76,7 +76,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> with ValidationMixin 
     on<GetProfileEvent>(
           (event, emit) async {
         emit(ProfileLoadingState());
-        graphQLService.initClient(addToken: user != null);
+        graphQLService.initClient();
         String? userId = user?.id;
         debugPrint('userId===> $userId');
         final result = await graphQLService.performQuery(

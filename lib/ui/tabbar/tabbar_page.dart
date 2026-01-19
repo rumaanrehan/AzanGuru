@@ -88,58 +88,61 @@ class _TabBarPageState extends State<TabBarPage> {
   }
 
   Widget _buildTabBar() {
-    return Container(
-      height: 85.h,
-      padding: EdgeInsets.symmetric(horizontal: 5.w),
-      clipBehavior: Clip.hardEdge,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppColors.tabBarColor,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(23.r),
-          topRight: Radius.circular(23.r),
+    return SafeArea(
+      bottom: true,
+      child: Container(
+        height: 85.h,
+        padding: EdgeInsets.symmetric(horizontal: 5.w),
+        clipBehavior: Clip.hardEdge,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.tabBarColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(23.r),
+            topRight: Radius.circular(23.r),
+          ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          _tabBarIcon(
-            'Home',
-            icon: AssetImages.icHome,
-            onTap: () {
-              _onItemTapped(0);
-            },
-            active: _selectedIndex == 0 ? true : false,
-          ),
-          _divider(),
-          _tabBarIcon(
-            'My Courses',
-            icon: AssetImages.icCourse,
-            onTap: () {
-              _onItemTapped(1);
-            },
-            active: _selectedIndex == 1 ? true : false,
-          ),
-          _divider(),
-          _tabBarIcon(
-            'Live Class',
-            icon: AssetImages.icLiveChat,
-            onTap: () {
-              _onItemTapped(2);
-            },
-            active: _selectedIndex == 2 ? true : false,
-          ),
-          _divider(),
-          _tabBarIcon(
-            'Support',
-            icon: AssetImages.icHelp,
-            onTap: () {
-              _onItemTapped(3);
-            },
-            active: _selectedIndex == 3 ? true : false,
-          ),
-        ],
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            _tabBarIcon(
+              'Home',
+              icon: AssetImages.icHome,
+              onTap: () {
+                _onItemTapped(0);
+              },
+              active: _selectedIndex == 0 ? true : false,
+            ),
+            _divider(),
+            _tabBarIcon(
+              'My Courses',
+              icon: AssetImages.icCourse,
+              onTap: () {
+                _onItemTapped(1);
+              },
+              active: _selectedIndex == 1 ? true : false,
+            ),
+            _divider(),
+            _tabBarIcon(
+              'Live Class',
+              icon: AssetImages.icLiveChat,
+              onTap: () {
+                _onItemTapped(2);
+              },
+              active: _selectedIndex == 2 ? true : false,
+            ),
+            _divider(),
+            _tabBarIcon(
+              'Support',
+              icon: AssetImages.icHelp,
+              onTap: () {
+                _onItemTapped(3);
+              },
+              active: _selectedIndex == 3 ? true : false,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:azan_guru_mobile/main.dart'; // to get navigatorKey
+
 
 
 const defaultValue = 56.0;
@@ -44,7 +44,7 @@ class AGLoader extends StatelessWidget {
       defaultPaddingTop = defaultValue;
       defaultPaddingBottom = defaultValue;
     }
-    _overlayState = navigatorKey.currentState?.overlay;
+    _overlayState = Overlay.of(context);
     if (_currentLoader == null) {
       /// Create current Loader Entry
       _currentLoader = OverlayEntry(

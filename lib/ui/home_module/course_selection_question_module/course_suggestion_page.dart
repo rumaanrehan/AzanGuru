@@ -4,6 +4,8 @@ import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
+import 'package:azan_guru_mobile/ui/common/ag_image_view.dart';
+import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:azan_guru_mobile/ui/model/mdl_choose_question.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -146,7 +148,12 @@ class _CourseSuggestionTileState extends State<CourseSuggestionTile> {
                                 ),
                               ),
                               customButton(
-                                onTap: () {
+                                onTap: () async {
+                                  if (!AGLoader.isShown) {
+                                    AGLoader.show(context);
+                                  }
+                                  await Future.delayed(
+                                      const Duration(milliseconds: 50));
                                   Get.offAndToNamed(
                                     Routes.courseDetailPage,
                                     arguments: course?.id,
@@ -201,12 +208,7 @@ class _CourseSuggestionTileState extends State<CourseSuggestionTile> {
   }
 
   Future<void> launchUrlInBrowser(String url) async {
-    var isValidUrl = await canLaunchUrl(Uri.parse(url));
-    if (isValidUrl) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(url);
   }
 
   Widget _backgroundView() {
