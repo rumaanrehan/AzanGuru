@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/firebase_message_sevice.dart';
 import 'package:azan_guru_mobile/graphQL/graphql_service.dart';
