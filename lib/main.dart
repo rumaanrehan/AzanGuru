@@ -18,11 +18,10 @@ import 'package:shared_preferences/shared_preferences.dart'
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/entities/app_version.dart'; // (You’ll create this file)
-import 'package:graphql_flutter/graphql_flutter.dart';
+
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 //import 'package:azan_guru_mobile/service/deep_link_service.dart';
-
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
@@ -67,12 +66,10 @@ Future<void> main() async {
     );
     final needsUpdate = await isUpdateRequired(client);
 
-
     /// 🔁 Run the app with update condition
     runApp(App(
       forceUpdate: needsUpdate,
     ));
-
   }, (Object error, StackTrace stack) {
     debugPrint(error.toString());
   });

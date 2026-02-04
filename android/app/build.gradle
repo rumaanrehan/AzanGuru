@@ -30,7 +30,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.azan_guru_mobile"
-    compileSdkVersion 35
+    compileSdkVersion 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {

@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:azan_guru_mobile/graphQL/graphql_service.dart';
 import 'package:azan_guru_mobile/graphQL/queries.dart';
 import 'package:azan_guru_mobile/ui/model/mdl_choose_question.dart';
