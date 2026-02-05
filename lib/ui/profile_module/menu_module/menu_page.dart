@@ -1,21 +1,18 @@
-import 'dart:developer';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
-import 'package:azan_guru_mobile/constant/enum.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/constant/language_key.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
-import 'package:azan_guru_mobile/ui/model/mdl_setting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
@@ -25,10 +22,17 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  List<MDLSetting> option = [];
+  String version = '';
+  // Replace with your user model and fetching logic
+  final user = null; // TODO: Replace with actual user fetching logic
 
   bool get isUserLoggedIn => user != null;
-  String version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    getAppVersion();
+  }
 
   void getAppVersion() async {
     await PackageInfo.fromPlatform().then((PackageInfo packageInfo) async {
@@ -40,285 +44,331 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    getAppVersion();
-    option = [
-      if (isUserLoggedIn) ...[
-        MDLSetting(
-          title: "My Profile",
-          settingOptionType: SettingOptionType.myProfile,
-        ),
-        // MDLSetting(
-        //   title: "Enrollment History",
-        //   settingOptionType: SettingOptionType.mySubscription,
-        // ),
-        MDLSetting(
-          title: "Setting",
-          showIcon: true,
-          settingOptionType: SettingOptionType.setting,
-        ),
-      ],
-      MDLSetting(
-        title: "Go to Website",
-        settingOptionType: SettingOptionType.aboutCompany,
-      ),
-      if (isUserLoggedIn) ...[
-        MDLSetting(
-          title: "Call Us",
-          showIcon: false,
-          settingOptionType: SettingOptionType.callUs,
-        ),
-      ],
-    ];
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.bgLightWhitColor,
       appBar: customAppBar(
         showTitle: true,
         centerTitle: true,
         backgroundColor: AppColors.appBgColor,
-        title: 'Menu',
+        title: 'Profile',
         showPrefixIcon: true,
         onClick: () {
           Get.back();
         },
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 30.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    height: 120.w,
-                    width: 120.w,
-                    padding: EdgeInsets.all(5.h),
-                    clipBehavior: Clip.hardEdge,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.logoColor,
-                    ),
-                    child: Image.asset(
-                      AssetImages.agLogo,
-                    ),
-                  ),
-                  SizedBox(height: 10.h),
-                  if (!isUserLoggedIn) ...[
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 30.h),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 120.w,
+                        width: 120.w,
+                        padding: EdgeInsets.all(5.h),
+                        clipBehavior: Clip.hardEdge,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.logoColor,
+                        ),
+                        child: SvgPicture.asset(
+                          AssetImages.icProfile,
+                          colorFilter: ColorFilter.mode(
+                            AppColors.white,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      if (isUserLoggedIn) ...[
                         Text(
-                          'Please login to view your settings.',
-                          style: AppFontStyle.poppinsRegular.copyWith(
-                            fontWeight: FontWeight.w100,
-                            fontSize: 20.sp,
+                          user?.name ?? 'User Name',
+                          style: AppFontStyle.poppinsMedium.copyWith(
+                            fontSize: 22.sp,
                             color: AppColors.appBgColor,
                           ),
                         ),
-                        SizedBox(height: 20.h),
+                        SizedBox(height: 5.h),
+                        Text(
+                          user?.email ?? 'user@email.com',
+                          style: AppFontStyle.poppinsRegular.copyWith(
+                            fontSize: 16.sp,
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          'Please login to view your profile.',
+                          style: AppFontStyle.poppinsRegular.copyWith(
+                            fontWeight: FontWeight.w100,
+                            fontSize: 18.sp,
+                            color: AppColors.appBgColor,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 16.h),
                         customButton(
                           width: 200.w,
                           onTap: () {
                             hideKeyboard(context);
                             Get.offAllNamed(Routes.login);
                             StorageManager.instance.setBool(
-                                LocalStorageKeys.prefGuestLogin, false);
+                              LocalStorageKeys.prefGuestLogin,
+                              false,
+                            );
                             StorageManager.instance.clear();
                           },
                           buttonText: LanguageKey.loginNow.tr,
                         ),
-                        SizedBox(height: 20.h),
                       ],
-                    )
-                  ],
-                  Expanded(
-                    child: ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.only(top: 15.h),
-                      itemCount: option.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        var data = option[index];
-                        return InkWell(
-                          splashColor: Colors.transparent,
-                          highlightColor: Colors.transparent,
-                          hoverColor: Colors.transparent,
-                          focusColor: Colors.transparent,
+                      SizedBox(height: 25.h),
+                      _sectionTitle('Account'),
+                      if (isUserLoggedIn) ...[
+                        _menuButton(
+                          icon: Icons.person,
+                          label: 'My Profile',
+                          subtitle: 'Edit your personal information',
+                          onTap: () => Get.toNamed(Routes.myProfile),
+                        ),
+                        _menuButton(
+                          icon: Icons.settings,
+                          label: 'App Settings',
+                          subtitle: 'Notifications, preferences, and more',
+                          onTap: () => Get.toNamed(Routes.settingPage),
+                        ),
+                        _menuButton(
+                          icon: Icons.history,
+                          label: 'Enrollment History',
+                          subtitle: 'View your subscriptions',
+                          onTap: () => Get.toNamed(Routes.mySubscription),
+                        ),
+                        _menuButton(
+                          icon: Icons.delete_outline,
+                          label: 'Delete Account',
+                          subtitle: 'Permanently remove your account',
+                          onTap: () => Get.toNamed(Routes.deleteAccountDetailPage),
+                          color: AppColors.red,
+                        ),
+                        _menuButton(
+                          icon: Icons.logout,
+                          label: 'Logout',
+                          subtitle: 'Sign out of your account',
                           onTap: () {
-                            switch (data.settingOptionType) {
-                              case SettingOptionType.aboutCompany:
-                                openCallingApp('https://azanguru.com/');
-                                break;
-                              case SettingOptionType.setting:
-                                Get.toNamed(Routes.settingPage);
-                                break;
-                              case SettingOptionType.callUs:
-                                openCallingApp('tel:+91 7419223123');
-                                break;
-                              case SettingOptionType.myProfile:
-                                Get.toNamed(Routes.myProfile);
-                                break;
-                              case SettingOptionType.mySubscription:
-                                Get.toNamed(Routes.mySubscription);
-                                break;
-                              case null:
-                                break;
-                            }
+                            Get.offAllNamed(Routes.login);
+                            StorageManager.instance.setBool(
+                              LocalStorageKeys.prefUserLogin,
+                              false,
+                            );
+                            StorageManager.instance.setString(
+                              LocalStorageKeys.prefAuthToken,
+                              '',
+                            );
+                            StorageManager.instance.clear();
                           },
-                          child: Column(
-                            children: [
-                              _customOptionRow(data),
-                              index < (option.length - 1)
-                                  ? _divider()
-                                  : const SizedBox.shrink(),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 10.w,
-            runSpacing: 5.h,
-            children: [
-              InkWell(
-                onTap: () {
-                  openCallingApp('https://azanguru.com/terms-condition/');
-                },
-                child: Text(
-                  'Terms & Conditions',
-                  style: AppFontStyle.poppinsRegular.copyWith(
-                    fontSize: 15.sp,
-                    color: AppColors.lightBlue,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.lightBlue,
-                  ),
-                ),
-              ),
-              SizedBox(height: 2.h),
-              InkWell(
-                onTap: () {
-                  openCallingApp('https://azanguru.com/privacy-policy/');
-                },
-                child: Text(
-                  'Privacy Policy',
-                  style: AppFontStyle.poppinsRegular.copyWith(
-                    fontSize: 15.sp,
-                    color: AppColors.lightBlue,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.lightBlue,
-                  ),
-                ),
-              ),
-              SizedBox(height: 2.h),
-              InkWell(
-                onTap: () {
-                  openCallingApp('https://azanguru.com/refund_returns/');
-                },
-                child: Text(
-                  'Refund & Cancellation',
-                  style: AppFontStyle.poppinsRegular.copyWith(
-                    fontSize: 15.sp,
-                    color: AppColors.lightBlue,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.lightBlue,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            'App Version $version',
-            style: AppFontStyle.poppinsRegular.copyWith(
-              fontSize: 15.sp,
-              color: AppColors.appBgColor,
-            ),
-          ),
-          SizedBox(height: 10.h),
-          if (isUserLoggedIn) ...[
-            Padding(
-              padding: EdgeInsets.only(
-                bottom: 30.h,
-                left: 50.w,
-                right: 50.w,
-              ),
-              child: customButton(
-                onTap: () {
-                  Get.offAllNamed(Routes.login);
-                  StorageManager.instance.setBool(
-                    LocalStorageKeys.prefUserLogin,
-                    false,
-                  );
-                  StorageManager.instance
-                      .setString(LocalStorageKeys.prefAuthToken, '');
-                  StorageManager.instance.clear();
-                },
-                boxColor: Colors.transparent,
-                borderColor: AppColors.greenBorderColor,
-                showBorder: true,
-                child: Text(
-                  'Logout',
-                  style: AppFontStyle.poppinsMedium.copyWith(
-                    color: AppColors.appBgColor,
+                          color: AppColors.red,
+                        ),
+                      ] else ...[
+                        _menuButton(
+                          icon: Icons.settings,
+                          label: 'App Settings',
+                          subtitle: 'Notifications, preferences, and more',
+                          onTap: () => Get.toNamed(Routes.settingPage),
+                        ),
+                      ],
+                      SizedBox(height: 10.h),
+                      _sectionTitle('Support'),
+                      _menuButton(
+                        icon: Icons.support_agent,
+                        label: 'Support',
+                        subtitle: 'Help center and FAQs',
+                        onTap: () => Get.toNamed(Routes.helpPage),
+                      ),
+                      _menuButton(
+                        icon: Icons.language,
+                        label: 'Go to Website',
+                        subtitle: 'Visit azanguru.com',
+                        onTap: () => openCallingApp('https://azanguru.com/'),
+                      ),
+                      _menuButton(
+                        icon: Icons.phone,
+                        label: 'Call Us',
+                        subtitle: '+91 7419223123',
+                        onTap: () => openCallingApp('tel:+91 7419223123'),
+                      ),
+                      _menuButton(
+                        icon: Icons.share,
+                        label: 'Share App',
+                        subtitle: 'Invite your friends',
+                        onTap: () => Share.share('Welcome!'),
+                      ),
+                      SizedBox(height: 10.h),
+                      _sectionTitle('About'),
+                      _menuButton(
+                        icon: Icons.info_outline,
+                        label: 'About App',
+                        subtitle: 'Version $version',
+                        onTap: () => _showAboutDialog(context),
+                      ),
+                      _menuButton(
+                        icon: Icons.description_outlined,
+                        label: 'Terms & Conditions',
+                        subtitle: 'Read the terms of service',
+                        onTap: () => openCallingApp(
+                          'https://azanguru.com/terms-condition/',
+                        ),
+                      ),
+                      _menuButton(
+                        icon: Icons.privacy_tip_outlined,
+                        label: 'Privacy Policy',
+                        subtitle: 'How we use your data',
+                        onTap: () => openCallingApp(
+                          'https://azanguru.com/privacy-policy/',
+                        ),
+                      ),
+                      _menuButton(
+                        icon: Icons.assignment_return_outlined,
+                        label: 'Refund & Cancellation',
+                        subtitle: 'Review refund policy',
+                        onTap: () => openCallingApp(
+                          'https://azanguru.com/refund_returns/',
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Text(
+                        'App Version $version',
+                        style: AppFontStyle.poppinsRegular.copyWith(
+                          fontSize: 14.sp,
+                          color: AppColors.greyColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _customOptionRow(MDLSetting option) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Text(
-            option.title ?? "",
-            style: AppFontStyle.poppinsMedium.copyWith(
-              fontSize: 18.sp,
-              color: AppColors.appBgColor,
-            ),
-            textAlign: TextAlign.start,
+  Widget _sectionTitle(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 10.h),
+        child: Text(
+          title,
+          style: AppFontStyle.poppinsMedium.copyWith(
+            fontSize: 16.sp,
+            color: AppColors.appBgColor,
           ),
         ),
-        Visibility(
-          visible: option.showIcon,
-          child: SizedBox(
-            height: 18.h,
-            width: 25.w,
-            child: SvgPicture.asset(
-              AssetImages.icArrowForword,
-              colorFilter: ColorFilter.mode(
-                AppColors.appBgColor,
-                BlendMode.srcIn,
-              ),
-              height: 20.h,
-            ),
-          ),
-        )
-      ],
+      ),
     );
   }
 
-  Widget _divider() {
+  Widget _menuButton({
+    required IconData icon,
+    required String label,
+    String? subtitle,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    final textColor = color ?? AppColors.appBgColor;
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 20.h),
-      child: const Divider(height: 0),
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: AppColors.dividerColor,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadowColor,
+                blurRadius: 8.r,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                height: 36.h,
+                width: 36.h,
+                decoration: BoxDecoration(
+                  color: AppColors.appBgColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(
+                  icon,
+                  color: textColor,
+                  size: 20.sp,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: AppFontStyle.poppinsMedium.copyWith(
+                        color: textColor,
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      SizedBox(height: 2.h),
+                      Text(
+                        subtitle,
+                        style: AppFontStyle.poppinsRegular.copyWith(
+                          color: AppColors.greyColor,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.greyColor,
+                size: 22.sp,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('AzanGuru'),
+          content: Text('Version $version'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
