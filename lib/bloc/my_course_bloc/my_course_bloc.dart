@@ -23,7 +23,7 @@ class MyCourseBloc extends Bloc<MyCourseEvent, MyCourseState> {
 
   _getMyCourse(GetMyCourseEvent event, Emitter emit) async {
     emit(MCShowLoadingState());
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     final result = await graphQLService.performQuery(
       AzanGuruQueries.myCourse,
       variables: {'id': user?.id ?? ''},
@@ -60,7 +60,7 @@ class MyCourseBloc extends Bloc<MyCourseEvent, MyCourseState> {
   }
 
   _lessonProgressUpdate(LessonProgressUpdateEvent event, Emitter emit) async {
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     final result = await graphQLService.performQuery(
       AzanGuruQueries.lessonProgressUpdate,
     );

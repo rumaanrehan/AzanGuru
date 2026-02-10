@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -20,8 +22,14 @@ import 'package:azan_guru_mobile/ui/model/mdl_course.dart';
 import 'package:azan_guru_mobile/ui/common/course_tile.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:azan_guru_mobile/common/util.dart'; // <-- for baseUrl, user (as used elsewhere)
+// add this near your other imports
+import 'package:google_mobile_ads/google_mobile_ads.dart' show AdSize;
 
+import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:video_player/video_player.dart';
+
+// 👇 Global route observer
+import 'package:azan_guru_mobile/common/route_observer.dart';
 
 class CourseScreenArgs {
   final bool isKids;
@@ -61,6 +69,9 @@ class _CourseScreenState extends State<CourseScreen> {
   final List<MDLCourseList> adultCourses = [];
   final List<MDLCourseList> kidsCourses = [];
 
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
+
   @override
   void initState() {
     super.initState();
@@ -82,8 +93,6 @@ class _CourseScreenState extends State<CourseScreen> {
       arguments: courseId,
     );
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -132,14 +141,15 @@ class _CourseScreenState extends State<CourseScreen> {
                   children: [
                     SizedBox(height: 20.h),
 
-                    // NEW (use your *direct* Bunny links here)
+                    // Explainer video (pauses on route change / background)
                     ExplainerVideoNative(
                       isKids: args.isKids,
-                      adultSrc: 'https://vz-a554f220-6c6.b-cdn.net/98ba33ce-dfc9-4306-b94d-609e0f1e40b4/playlist.m3u8',
-                      kidsSrc:  'https://vz-a554f220-6c6.b-cdn.net/895d18e1-fa3a-431c-8818-49c5a63a28ed/playlist.m3u8',
+                      adultSrc:
+                      'https://vz-a554f220-6c6.b-cdn.net/98ba33ce-dfc9-4306-b94d-609e0f1e40b4/playlist.m3u8',
+                      kidsSrc:
+                      'https://vz-a554f220-6c6.b-cdn.net/895d18e1-fa3a-431c-8818-49c5a63a28ed/playlist.m3u8',
                       autoPlay: false,
                     ),
-
 
                     SizedBox(height: 20.h),
 
@@ -168,7 +178,8 @@ class _CourseScreenState extends State<CourseScreen> {
                         ),
                       )
                     else
-                      ...selectedGroups.expand(
+                      ...selectedGroups
+                          .expand(
                             (group) => (group.mdlCourse ?? [])
                             .map(
                               (course) => Padding(
@@ -180,7 +191,8 @@ class _CourseScreenState extends State<CourseScreen> {
                           ),
                         )
                             .toList(),
-                      ),
+                      )
+                          .toList(),
 
                     // BUY BUTTON
                     SizedBox(height: 8.h),
@@ -195,22 +207,30 @@ class _CourseScreenState extends State<CourseScreen> {
                           ),
                         ),
                         onPressed: () {
+
+                          /// 🔹 CHECK LOGIN
+                          final isUserLoggedIn = user != null;
+
+                          if (!isUserLoggedIn) {
+                            Get.toNamed(Routes.login);
+                            StorageManager.instance.setBool(
+                                LocalStorageKeys.prefGuestLogin, false);
+                            StorageManager.instance.clear();
+                            return;
+                          }
+
                           // Find the first available course to use its ids
                           String? firstCourseId;
                           int? firstDatabaseId;
 
-                          'scan'.codeUnitAt(0); // no-op to avoid analyzer complaining about inline vars in loops on some setups
+                          'scan'.codeUnitAt(0); // no-op
 
                           outer:
                           for (final group in selectedGroups) {
                             for (final course in (group.mdlCourse ?? [])) {
                               if (course != null) {
-                                if (firstCourseId == null) {
-                                  firstCourseId = course.id;
-                                }
-                                if (firstDatabaseId == null) {
-                                  firstDatabaseId = course.databaseId;
-                                }
+                                firstCourseId ??= course.id;
+                                firstDatabaseId ??= course.databaseId;
                                 if (firstCourseId != null &&
                                     firstDatabaseId != null) {
                                   break outer;
@@ -219,7 +239,8 @@ class _CourseScreenState extends State<CourseScreen> {
                             }
                           }
 
-                          if (firstCourseId == null || firstDatabaseId == null) {
+                          if (firstCourseId == null ||
+                              firstDatabaseId == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('No course found to purchase.'),
@@ -229,38 +250,27 @@ class _CourseScreenState extends State<CourseScreen> {
                           }
 
                           if (Platform.isIOS) {
-                            // iOS → Plan page (same pattern as CourseDetailPage)
+                            // iOS → Plan page
                             Get.toNamed(
                               Routes.planPage,
                               arguments: [firstCourseId, false],
                             );
                           } else {
-                            // Web checkout with baseUrl + user (from common/util.dart)
+                            // Web checkout
                             final dbId = firstDatabaseId!;
-                            final studentId = user?.databaseId?.toString() ?? '';
-
-                            // if (studentId.isEmpty) {
-                            //   // If user not logged in, you can redirect to login or show a message
-                            //   ScaffoldMessenger.of(context).showSnackBar(
-                            //     const SnackBar(
-                            //       content: Text('Please log in to continue.'),
-                            //     ),
-                            //   );
-                            //   return;
-                            // }
+                            final studentId =
+                                user?.databaseId?.toString() ?? '';
 
                             late final String url;
                             if (args.isKids) {
-                              // Monthly subscription SKU for kids (matches your working code)
                               url =
-                              '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=$dbId&student_id=$studentId';
+                              '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=$dbId&student_id=$studentId&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
                             } else {
-                              // Adults pack (your working code)
                               url =
-                              '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$dbId&student_id=$studentId';
+                              '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$dbId&student_id=$studentId&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
                             }
                             debugPrint('url===> $url');
-                            Get.toNamed(Routes.agWebViewPage, arguments: url);
+                            launchUrlInExternalBrowser(url);
                           }
                         },
                         child: Text(
@@ -270,6 +280,12 @@ class _CourseScreenState extends State<CourseScreen> {
                             color: Colors.white,
                           ),
                         ),
+                      ),
+                    ),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.h),
+                        child: AGBannerAd(adSize: AdSize.mediumRectangle),
                       ),
                     ),
                   ],
@@ -296,10 +312,11 @@ class _CourseScreenState extends State<CourseScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _headerIcon(
-                              icon: Icons.arrow_back_ios_new_rounded,
-                              onTap: () => Get.back(),
-                            ),
+                            if (Get.key.currentState?.canPop() ?? false)
+                              _headerIcon(
+                                icon: Icons.arrow_back_ios_new_rounded,
+                                onTap: () => Get.back(),
+                              ),
                             SizedBox(width: 16.w),
                             _headerIcon(
                               icon: Icons.home_rounded,
@@ -366,7 +383,7 @@ class ExplainerVideoNative extends StatefulWidget {
     super.key,
     required this.isKids,
     required this.adultSrc, // direct HLS/MP4
-    required this.kidsSrc,  // direct HLS/MP4
+    required this.kidsSrc, // direct HLS/MP4
     this.autoPlay = false,
   });
 
@@ -379,36 +396,91 @@ class ExplainerVideoNative extends StatefulWidget {
   State<ExplainerVideoNative> createState() => _ExplainerVideoNativeState();
 }
 
-class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
+class _ExplainerVideoNativeState extends State<ExplainerVideoNative>
+    with WidgetsBindingObserver, RouteAware {
   VideoPlayerController? _controller;
   bool _initialized = false;
   bool _hadError = false;
 
   String get _src => widget.isKids ? widget.kidsSrc : widget.adultSrc;
 
+  Future<void> _initController(String url) async {
+    final old = _controller;
+    _controller = VideoPlayerController.networkUrl(Uri.parse(url))
+      ..setLooping(false);
+
+    try {
+      await _controller!.initialize();
+      if (!mounted) return;
+      setState(() => _initialized = true);
+      if (widget.autoPlay) {
+        await _controller!.play();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _hadError = true);
+    } finally {
+      // dispose old after swap
+      old?.dispose();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initController(_src);
+  }
 
-    // IMPORTANT: use networkUrl ctor for newer video_player
-    _controller = VideoPlayerController.networkUrl(Uri.parse(_src))
-      ..setLooping(false)
-      ..initialize().then((_) async {
-        if (!mounted) return;
-        setState(() => _initialized = true);
-        if (widget.autoPlay) {
-          await _controller!.play();
-        }
-      }).catchError((_) {
-        if (!mounted) return;
-        setState(() => _hadError = true);
-      });
+  // If user toggles between Kids/Adult or URLs change, re-init
+  @override
+  void didUpdateWidget(covariant ExplainerVideoNative oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldSrc = oldWidget.isKids ? oldWidget.kidsSrc : oldWidget.adultSrc;
+    if (oldSrc != _src) {
+      _initialized = false;
+      _hadError = false;
+      _initController(_src);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      routeObserver.subscribe(this, route);
+    }
   }
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     super.dispose();
+  }
+
+  // App lifecycle: pause on background / lock / switch
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _controller?.pause();
+    }
+  }
+
+  // RouteAware: new route pushed on top -> pause
+  @override
+  void didPushNext() {
+    _controller?.pause();
+  }
+
+  // Optionally resume when returning
+  @override
+  void didPopNext() {
+    if (widget.autoPlay) _controller?.play();
   }
 
   @override
@@ -451,7 +523,7 @@ class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
                   opacity: _controller!.value.isPlaying ? 0.0 : 1.0,
                   child: Container(
                     padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.black45,
                       shape: BoxShape.circle,
                     ),

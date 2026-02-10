@@ -7,7 +7,7 @@ final Map<String, String> arabic = {
   LanguageKey.userNameOrEmail: "Email/User name",
   LanguageKey.password: "Password",
   LanguageKey.doNotHaveAccount: "Don’t have an account",
-  LanguageKey.forgetPasswordResetNow: "Forget Password? Reset now",
+  LanguageKey.forgetPasswordResetNow: "Forgot Password? Reset now",
   LanguageKey.registerNow: "Register Now",
   LanguageKey.alreadyHaveAccount: "Already have an account",
   LanguageKey.login: "Login",

@@ -17,6 +17,12 @@ import 'package:marquee/marquee.dart';
 
 import 'package:video_player/video_player.dart';
 
+// advertisement related imports
+import 'package:google_mobile_ads/google_mobile_ads.dart' show AdSize;
+import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
+
+import 'package:azan_guru_mobile/common/route_observer.dart';
+
 
 
 class CourseSelectionScreen extends StatelessWidget {
@@ -204,25 +210,15 @@ class CourseSelectionScreen extends StatelessWidget {
 
                     SizedBox(height: 24.h),
 
-                    // OR divider
-                    _orDivider(),
+                    // SizedBox(height: 40.h),
 
-                    SizedBox(height: 16.h),
-
-                    // Secondary action (kept for parity with your UX)
-                    TextButton(
-                      onPressed: () => Get.offAllNamed(Routes.tabBarPage),
-                      //onPressed: () => Get.offAllNamed(Routes.tabBarPage, arguments: 1),
-                      child: Text(
-                        "Skip for now",
-                        style: AppFontStyle.poppinsMedium.copyWith(
-                          color: AppColors.appBgColor,
-                          fontSize: 14.5.sp,
-                        ),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.h),
+                        child: AGBannerAd(adSize: AdSize.mediumRectangle),
                       ),
                     ),
-
-                    SizedBox(height: 40.h),
+                    // SizedBox(height: 40.h),
                   ],
                 ),
               ),
@@ -408,8 +404,8 @@ class ExplainerVideoNative extends StatefulWidget {
   State<ExplainerVideoNative> createState() => _ExplainerVideoNativeState();
 }
 
-
-class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
+class _ExplainerVideoNativeState extends State<ExplainerVideoNative>
+    with WidgetsBindingObserver, RouteAware {
   VideoPlayerController? _controller;
   bool _initialized = false;
   bool _hadError = false;
@@ -420,7 +416,10 @@ class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
   void initState() {
     super.initState();
 
-    // IMPORTANT: use networkUrl ctor for newer video_player
+    // Watch app lifecycle
+    WidgetsBinding.instance.addObserver(this);
+
+    // Initialize controller
     _controller = VideoPlayerController.networkUrl(Uri.parse(_src))
       ..setLooping(false)
       ..initialize().then((_) async {
@@ -436,14 +435,46 @@ class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
     _controller?.dispose();
     super.dispose();
   }
 
+  // 🔹 Called when app goes background or loses focus
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _controller?.pause();
+    }
+  }
+
+  // 🔹 Called when navigating to another page
+  @override
+  void didPushNext() {
+    _controller?.pause();
+  }
+
+  // 🔹 Optional: resume when coming back
+  @override
+  void didPopNext() {
+    if (widget.autoPlay) _controller?.play();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 16:9 area with rounded corners
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
@@ -463,7 +494,6 @@ class _ExplainerVideoNativeState extends State<ExplainerVideoNative> {
                 child: VideoPlayer(_controller!),
               ),
             ),
-            // very simple play/pause overlay
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {

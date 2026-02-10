@@ -74,7 +74,8 @@ class _CourseCompleteSuccessState extends State<CourseCompleteSuccessPage> {
                           ),
                           customButton(
                             onTap: () {
-                              Get.toNamed(Routes.agWebViewPage, arguments: url);
+                              // Get.toNamed(Routes.agWebViewPage, arguments: url);
+                              launchUrlInExternalBrowser(url);
                             },
                             boxColor: AppColors.alertButtonColor,
                             child: Text(

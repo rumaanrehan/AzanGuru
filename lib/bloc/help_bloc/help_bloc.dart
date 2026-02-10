@@ -17,7 +17,7 @@ class HelpBloc extends Bloc<HelpEvent, HelpState> {
   }
 
   _getOrderStatusEvent(GetOrderStatusEvent event, Emitter emit) async {
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     emit(ShowLoaderState());
     final result = await graphQLService.performQuery(
       AzanGuruQueries.getOrderStatus,

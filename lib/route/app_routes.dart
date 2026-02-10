@@ -16,6 +16,7 @@ import 'package:azan_guru_mobile/ui/listen_quran/listen_quran_screen.dart';
 import 'package:azan_guru_mobile/ui/lrf_module/login_page.dart';
 import 'package:azan_guru_mobile/ui/lrf_module/register_page.dart';
 import 'package:azan_guru_mobile/ui/lrf_module/reset_password_page.dart';
+import 'package:azan_guru_mobile/ui/lrf_module/forgot_password_page.dart';
 import 'package:azan_guru_mobile/ui/lrf_module/select_language_page.dart';
 import 'package:azan_guru_mobile/ui/my_subscription/my_subscription_screen.dart';
 import 'package:azan_guru_mobile/ui/ag_webview_page.dart';
@@ -30,6 +31,8 @@ import 'package:azan_guru_mobile/ui/splash/splash_screen.dart';
 import 'package:azan_guru_mobile/ui/course_module/course_selection_screen.dart';
 import 'package:azan_guru_mobile/ui/course_module/course_screen.dart';
 import 'package:azan_guru_mobile/ui/my_course/my_course_page.dart';
+
+import 'package:flutter/material.dart';
 
 
 class AppPages {
@@ -49,6 +52,10 @@ class AppPages {
     GetPage(
       name: Routes.resetPasswordPage,
       page: () => const ResetPasswordPage(),
+    ),
+    GetPage(
+      name: Routes.forgotPasswordPage,
+      page: () => const ForgotPasswordPage(),
     ),
     GetPage(
       name: Routes.tabBarPage,
@@ -166,6 +173,7 @@ class Routes {
   static const selectLanguagePage = '/selectLanguagePage';
   static const registerPage = '/registerPage';
   static const resetPasswordPage = '/resetPasswordPage';
+  static const forgotPasswordPage = '/forgotPasswordPage';
   static const tabBarPage = '/tabBarPage';
   static const homePage = '/homePage';
   static const changePasswordPage = '/changePasswordPage';

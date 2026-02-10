@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
-import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/constant/language_key.dart';
@@ -11,6 +10,7 @@ import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:azan_guru_mobile/ui/common/course_tile.dart';
+import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:azan_guru_mobile/ui/model/ag_categories_data.dart';
 import 'package:azan_guru_mobile/ui/model/lesson_progress_update.dart';
@@ -18,7 +18,6 @@ import 'package:azan_guru_mobile/ui/model/mdl_course.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -35,6 +34,7 @@ class _MyCoursePageState extends State<MyCoursePage> {
   MDLLessonProgress? mdlLessonProgress;
 
   bool get isUserLoggedIn => user != null;
+
 
   MyCourseBloc get bloc => context.read<MyCourseBloc>();
 
@@ -73,142 +73,143 @@ class _MyCoursePageState extends State<MyCoursePage> {
       },
       builder: (context, state) {
         return Scaffold(
-          body: Column(
+          body: Stack(
             children: [
-              _headerView(),
-              Expanded(
-                child: isUserLoggedIn
-                    ? ((mdlCourseList?.length ?? 0) == 0)
-                        ? state is MCShowLoadingState
-                            ? const SizedBox.shrink()
-                            : Center(
-                                child: Text(
-                                  'No data found',
+              Padding(
+                padding: EdgeInsets.only(top: 90.h),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: isUserLoggedIn
+                          ? ((mdlCourseList?.length ?? 0) == 0)
+                              ? state is MCShowLoadingState
+                                  ? const SizedBox.shrink()
+                                  : Center(
+                                      child: Text(
+                                        'No data found! If you are an existing student and you logged in with otp, please login with your old username/email and password. Or Contact AzanGuru Team on WHatsApp: 8950914110',
+                                        style: AppFontStyle.poppinsRegular
+                                            .copyWith(
+                                          fontWeight: FontWeight.w100,
+                                          fontSize: 20.sp,
+                                          color: AppColors.appBgColor,
+                                        ),
+                                      ),
+                                    )
+                              : SingleChildScrollView(
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      left: 30.w,
+                                      right: 30.w,
+                                      top: 22.h,
+                                    ),
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      padding: EdgeInsets.only(top: 15.h),
+                                      itemCount: mdlCourseList?.length,
+                                      itemBuilder:
+                                          (BuildContext context, int index) {
+                                        MDLCourseList? mdlCourseData =
+                                            mdlCourseList?[index];
+                                        if (mdlCourseData?.count == null) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        return Column(
+                                          children: [
+                                            _countRow(mdlCourseData),
+                                            ListView.builder(
+                                              shrinkWrap: true,
+                                              physics:
+                                                  const NeverScrollableScrollPhysics(),
+                                              padding:
+                                                  EdgeInsets.only(top: 15.h),
+                                              itemCount: mdlCourseData
+                                                      ?.mdlCourse?.length ??
+                                                  0,
+                                              itemBuilder:
+                                                  (BuildContext context,
+                                                      int subIndex) {
+                                                AgCategoriesNode? data =
+                                                    mdlCourseData
+                                                        ?.mdlCourse?[subIndex];
+                                                return CourseTile(
+                                                  isMyCourse: true,
+                                                  mdlCourse: data,
+                                                  studentProgress:
+                                                      mdlCourseData
+                                                              ?.studentProgress ??
+                                                          0,
+                                                  onTap: () async {
+                                                    if (!AGLoader.isShown) {
+                                                      AGLoader.show(context);
+                                                    }
+                                                    await Future.delayed(
+                                                        const Duration(
+                                                            milliseconds: 50));
+                                                    Get.toNamed(
+                                                      Routes.courseDetailPage,
+                                                      arguments: mdlCourseList![
+                                                              index]
+                                                          .mdlCourse![subIndex]
+                                                          .id
+                                                          .toString(),
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Please login to view your courses.',
                                   style: AppFontStyle.poppinsRegular.copyWith(
                                     fontWeight: FontWeight.w100,
                                     fontSize: 20.sp,
                                     color: AppColors.appBgColor,
                                   ),
                                 ),
-                              )
-                        : SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                left: 30.w,
-                                right: 30.w,
-                                top: 22.h,
-                              ),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding: EdgeInsets.only(top: 15.h),
-                                itemCount: mdlCourseList?.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  MDLCourseList? mdlCourseData =
-                                      mdlCourseList?[index];
-                                  if (mdlCourseData?.count == null) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return Column(
-                                    children: [
-                                      _countRow(mdlCourseData),
-                                      ListView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        padding: EdgeInsets.only(top: 15.h),
-                                        itemCount:
-                                            mdlCourseData?.mdlCourse?.length ??
-                                                0,
-                                        itemBuilder: (BuildContext context,
-                                            int subIndex) {
-                                          AgCategoriesNode? data = mdlCourseData
-                                              ?.mdlCourse?[subIndex];
-                                          return CourseTile(
-                                            isMyCourse: true,
-                                            mdlCourse: data,
-                                            studentProgress: mdlCourseData
-                                                    ?.studentProgress ??
-                                                0,
-                                            onTap: () {
-                                              Get.toNamed(
-                                                Routes.courseDetailPage,
-                                                arguments: [
-                                                  mdlCourseList![index]
-                                                      .mdlCourse![subIndex]
-                                                      .id
-                                                      .toString(),
-                                                  mdlCourseList![index]
-                                                      .studentProgress,
-                                                  mdlCourseList![index]
-                                                      .studentCompletedLessons
-                                                      ?.nodes
-                                                      ?.toList(),
-                                                  true,
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
+                                SizedBox(height: 20.w),
+                                customButton(
+                                  width: 200.w,
+                                  onTap: () {
+                                    hideKeyboard(context);
+                                    Get.offAllNamed(Routes.login);
+                                    StorageManager.instance.setBool(
+                                        LocalStorageKeys.prefGuestLogin, false);
+                                    StorageManager.instance.clear();
+                                  },
+                                  buttonText: LanguageKey.loginNow.tr,
+                                ),
+                              ],
                             ),
-                          )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Please login to view your courses.',
-                            style: AppFontStyle.poppinsRegular.copyWith(
-                              fontWeight: FontWeight.w100,
-                              fontSize: 20.sp,
-                              color: AppColors.appBgColor,
-                            ),
-                          ),
-                          SizedBox(height: 20.w),
-                          customButton(
-                            width: 200.w,
-                            onTap: () {
-                              hideKeyboard(context);
-                              Get.offAllNamed(Routes.login);
-                              StorageManager.instance.setBool(
-                                  LocalStorageKeys.prefGuestLogin, false);
-                              StorageManager.instance.clear();
-                            },
-                            buttonText: LanguageKey.loginNow.tr,
-                          ),
-                        ],
+                    ),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.h),
+                        child: AGBannerAd(adSize: AdSize.mediumRectangle),
                       ),
-              ),
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.h),
-                  child: AGBannerAd(adSize: AdSize.mediumRectangle),
+                    ),
+                    SizedBox(height: 80.h)
+                  ],
                 ),
               ),
-              SizedBox(height: 80.h)
+              // Header bar (shared)
+              AgHeaderBar(
+                onMenuTap: () => Get.toNamed(Routes.menuPage),
+              ),
             ],
           ),
         );
       },
-    );
-  }
-  Widget _headerView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        customHeader(),
-        Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
-            child: AGBannerAd(adSize: AdSize.banner),
-          ),
-        ),
-      ],
     );
   }
 

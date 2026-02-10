@@ -1,13 +1,16 @@
 import 'dart:io';
 
 import 'package:azan_guru_mobile/bloc/home_bloc/home_bloc.dart';
+import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
-import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
+import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
 //import 'package:azan_guru_mobile/ui/common/course_tile.dart';
 //import 'package:azan_guru_mobile/ui/model/ag_categories_data.dart';
 //import 'package:azan_guru_mobile/ui/model/mdl_course.dart';
@@ -32,6 +35,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Silent fetch in background for HomePage
+    if (user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<MyCourseBloc>().add(GetMyCourseEvent());
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +75,7 @@ class _HomePageState extends State<HomePage> {
                               SizedBox(height: 28.h),
 
                               Text(
-                                "Select Learner.",
+                                "New Here? Buy Course!",
                                 textAlign: TextAlign.center,
                                 style: AppFontStyle.poppinsSemiBold.copyWith(
                                   fontSize: 20.sp,
@@ -121,65 +135,63 @@ class _HomePageState extends State<HomePage> {
           ),
 
           // Header bar
-          Container
-            (
-            color: const Color(0xFF4D8974),
-            padding: EdgeInsets.only(
-              left: 20.w,
-              right: 20.w,
-              top: 46.h,
-              bottom: 12.h,
-            ),
-            child: SizedBox(
-              height: 48.h,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Left: Back + Home
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () => Get.back(),
-                        ),
-                        SizedBox(width: 16.w),
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.home_rounded,
-                          onTap: () => Get.offAllNamed(Routes.tabBarPage),
-                        ),
-                      ],
-                    ),
-                  ),
+          AgHeaderBar(
+            onMenuTap: () => Get.toNamed(Routes.menuPage),
+          ),
+        ],
+      ),
+    );
+  }
 
-                  // Right: Basmala + Menu
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "﷽",
-                          textAlign: TextAlign.right,
-                          style: AppFontStyle.dmSansRegular.copyWith(
-                            fontSize: 22.5.sp,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: 16.w),
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.menu_rounded,
-                          onTap: () => Get.toNamed(Routes.menuPage),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+  Widget _buildAccessPurchasedCourseBox() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4D8974), // Primary green background
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text("📖 Access Your Purchased Course",
+                  style: AppFontStyle.poppinsSemiBold.copyWith(
+                    fontSize: 16.sp,
+                    color: Colors.white,
+                  )),
+              const Spacer(),
+              const Icon(Icons.star_rounded, color: Color(0xFFFFD700), size: 20),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "Begin your journey! Go to 'My Courses' and start learning today.",
+            style: AppFontStyle.poppinsRegular.copyWith(
+              fontSize: 13.5.sp,
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+          SizedBox(height: 18.h),
+          customButton(
+            boxColor: const Color(0xFFddece7), // Reversed: light green CTA
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            onTap: () => Get.offAllNamed(Routes.tabBarPage, arguments: 1),
+            child: Center(
+              child: Text(
+                "Go to My Courses →",
+                style: AppFontStyle.poppinsBold.copyWith(
+                  //color: const Color(0xFF4D8974), // Dark green text in light button
+                  fontSize: 14.5.sp,
+                ),
               ),
             ),
           ),
@@ -198,7 +210,9 @@ class _HomePageState extends State<HomePage> {
           Align(
             alignment: Alignment.center,
             child: Text(
-              "Assalamualaikum!",
+              (user?.firstName?.trim().isNotEmpty ?? false)
+                  ? "Assalamualaikum, ${user!.firstName!.trim()}!"
+                  : "Assalamualaikum!",
               style: AppFontStyle.poppinsSemiBold.copyWith(fontSize: 20.5.sp),
             ),
           ),
@@ -274,17 +288,32 @@ class _HomePageState extends State<HomePage> {
 
           SizedBox(height: 20.h),
 
-          _resourceTileWithIcon(
-            title: "Listen Quran for Free",
-            iconPath: 'assets/images/listen.png',
-            onTap: () => Get.toNamed(Routes.listenQuran),
+          BlocBuilder<MyCourseBloc, MyCourseState>(
+            builder: (context, state) {
+              if (state is GetMyCourseState && (state.nodes?.isNotEmpty ?? false)) {
+                return Column(
+                  children: [
+                    _buildAccessPurchasedCourseBox(),
+                    SizedBox(height: 20.h),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-          SizedBox(height: 10.h),
-          _resourceTileWithIcon(
-            title: "Watch QTube — Free Quran Videos",
-            iconPath: 'assets/images/watch.png',
-            onTap: () => Get.toNamed(Routes.questionAnswerPage),
-          ),
+
+          // comment out listen quran and watch qtube as per user request
+          // _resourceTileWithIcon(
+          //   title: "Listen Quran for Free",
+          //   iconPath: 'assets/images/listen.png',
+          //   onTap: () => Get.toNamed(Routes.listenQuran),
+          // ),
+          // SizedBox(height: 10.h),
+          // _resourceTileWithIcon(
+          //   title: "Watch QTube — Free Quran Videos",
+          //   iconPath: 'assets/images/watch.png',
+          //   onTap: () => Get.toNamed(Routes.questionAnswerPage),
+          // ),
         ],
       ),
     );
@@ -485,25 +514,5 @@ Widget orDivider() {
       ),
       const Expanded(child: Divider(color: Colors.black12, thickness: 1)),
     ],
-  );
-}
-
-Widget _headerIcon({
-  required BuildContext context,
-  required IconData icon,
-  required VoidCallback onTap,
-}) {
-  return InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(999),
-    child: Container(
-      width: 38.w,
-      height: 38.w,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: AppColors.white, size: 20.sp),
-    ),
   );
 }

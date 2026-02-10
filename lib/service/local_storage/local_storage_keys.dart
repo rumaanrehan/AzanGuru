@@ -10,4 +10,7 @@ class LocalStorageKeys {
   static const String prefDatabaseId= 'database_id';
   static const String isLoggedIn = 'is_logged_in';
   static const String isUserHasSubscription = 'is_user_has_subscription';
+  static const String isCoursePurchased = 'is_course_purchased'; // Added this key
+  static const String digitsAccessToken = 'digits_access_token';
+  static const String digitsUserId = 'digits_user_id';
 }

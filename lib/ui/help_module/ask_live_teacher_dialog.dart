@@ -15,7 +15,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:whatsapp_unilink/whatsapp_unilink.dart';
 
-
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 
 class AskLiveTeacherDialog extends StatefulWidget {
@@ -42,6 +42,10 @@ class _AskLiveTeacherDialogState extends State<AskLiveTeacherDialog> {
   bool isUserHasSubscription = false;
   bool loading = false;
   String phoneNumber = '+91 8950914110';
+  
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
+
   @override
   void initState() {
     if (isUserLoggedIn) {
@@ -220,10 +224,10 @@ class _AskLiveTeacherDialogState extends State<AskLiveTeacherDialog> {
                           } else {
                             final user = StorageManager.instance.getLoginUser();
                             final url =
-                                '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=10'
+                                '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=10&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView'
                                 '${user != null ? '&student_id=${user.databaseId}' : ''}';
                             debugPrint('Ask Live Teach \n $url');
-                            Get.toNamed(Routes.agWebViewPage, arguments: url);
+                            launchUrlInExternalBrowser(url);
                           }
                         },
                       ),
@@ -258,12 +262,7 @@ class _AskLiveTeacherDialogState extends State<AskLiveTeacherDialog> {
   }
 
   Future<void> launchUrlInBrowser(String url) async {
-    var isValidUrl = await canLaunchUrl(Uri.parse(url));
-    if (isValidUrl) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(url);
   }
 
   static Widget _customButton({

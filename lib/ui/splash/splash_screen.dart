@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import '../auth/auth_gate.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,10 +15,10 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -27,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen>
     _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
     _controller.forward();
 
-    Timer(const Duration(seconds: 2), () async {
+    _timer = Timer(const Duration(seconds: 2), () async {
       final user = StorageManager.getInstance().getLoginUser();
       final isGuest =
           StorageManager.getInstance().getBool(LocalStorageKeys.prefGuestLogin) ?? false;
@@ -42,6 +44,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }

@@ -441,34 +441,37 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _bottomContainer({required BuildContext context}) {
-    return Container(
-      height: 165.h,
-      alignment: Alignment.bottomCenter,
-      child: containerBoxDecoration(
-        padding:
-            EdgeInsets.only(left: 56.w, right: 56.w, top: 18.h, bottom: 35.h),
-        child: Column(
-          children: [
-            Text(
-              LanguageKey.alreadyHaveAccount.tr,
-              textAlign: TextAlign.center,
-              style: AppFontStyle.poppinsRegular.copyWith(
-                fontSize: 18.sp,
-                color: AppColors.tittleTextColor,
-                height: 1.3,
+    return SafeArea(
+      bottom: true,
+      child: Container(
+        height: 165.h,
+        alignment: Alignment.bottomCenter,
+        child: containerBoxDecoration(
+          padding:
+              EdgeInsets.only(left: 56.w, right: 56.w, top: 18.h, bottom: 35.h),
+          child: Column(
+            children: [
+              Text(
+                LanguageKey.alreadyHaveAccount.tr,
+                textAlign: TextAlign.center,
+                style: AppFontStyle.poppinsRegular.copyWith(
+                  fontSize: 18.sp,
+                  color: AppColors.tittleTextColor,
+                  height: 1.3,
+                ),
               ),
-            ),
-            SizedBox(height: 20.h),
-            customButton(
-              onTap: () {
-                Get.offAllNamed(Routes.login);
-              },
-              boxColor: AppColors.bgColorBottom,
-              borderColor: AppColors.greenBorderColor,
-              showBorder: true,
-              buttonText: LanguageKey.login.tr.toUpperCase(),
-            ),
-          ],
+              SizedBox(height: 20.h),
+              customButton(
+                onTap: () {
+                  Get.offAllNamed(Routes.login);
+                },
+                boxColor: AppColors.bgColorBottom,
+                borderColor: AppColors.greenBorderColor,
+                showBorder: true,
+                buttonText: LanguageKey.login.tr.toUpperCase(),
+              ),
+            ],
+          ),
         ),
       ),
     );

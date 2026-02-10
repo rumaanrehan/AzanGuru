@@ -21,7 +21,7 @@ class MySubscriptionBloc
 
   _getMySubscription(GetMySubscriptionEvent event, Emitter emit) async {
     emit(MySubscriptionLoading(isLoading: true));
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     final result = await graphQLService.performQuery(
       AzanGuruQueries.getOrderStatus,
       variables: {'email': user?.email ?? ''},

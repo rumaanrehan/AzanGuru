@@ -50,7 +50,7 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
 
   _submitQuiz(SubmitQuizEvent event, Emitter emit) async {
     emit(ShowLessonDetailLoadingState());
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     final result = await graphQLService.performMutation(
       AzanGuruQueries.submitQuizNew,
       variables: {
@@ -168,7 +168,7 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
 
   _submitLesson(SubmitLessonEvent event, Emitter emit) async {
     emit(ShowLessonDetailLoadingState());
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     final result = await graphQLService.performMutation(
       AzanGuruQueries.submitLesson,
       variables: {
@@ -202,7 +202,7 @@ class LessonDetailBloc extends Bloc<LessonDetailEvent, LessonDetailState> {
     Emitter emit,
   ) async {
     emit(ShowLessonDetailLoadingState());
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     final result = await graphQLService.performQuery(
       AzanGuruQueries.getSubmittedQuizzAnswers,
       variables: {

@@ -40,11 +40,7 @@ class _PlanScreenState extends State<PlanScreen> {
   ProfileBloc profileBloc = ProfileBloc();
 
   openCallingApp(String uri) async {
-    Uri url = Uri.parse(uri);
-    if (await launchUrl(url)) {
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(uri);
   }
 
   @override
@@ -262,7 +258,7 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
               SizedBox(width: 5.w),
               Text(
-                'One time payment',
+                'One time',
                 style: AppFontStyle.poppinsRegular.copyWith(
                   fontSize: 15.sp,
                   color: AppColors.white,
@@ -288,7 +284,7 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
           SizedBox(height: 5.h),
           Text(
-            '✓ Response to Daily Sabaq Recordings (Standard)',
+            '✓ Access to Forums and Groups',
             style: AppFontStyle.poppinsRegular.copyWith(
               fontSize: 17.sp,
               color: AppColors.white,
@@ -388,7 +384,7 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
               SizedBox(width: 5.w),
               Text(
-                'For 6 months',
+                'per month',
                 style: AppFontStyle.poppinsRegular.copyWith(
                   fontSize: 15.sp,
                   color: AppColors.cardTextColor,

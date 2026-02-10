@@ -63,6 +63,45 @@ mutation MyMutation($username: String!) {
 }
 """;
 
+  // UPDATED: Now uses email instead of userId to match backend schema
+  static const String getSubscriptionsByEmail = r'''
+query GetSubscriptionsByEmail($email: String!) {
+  getSubscriptions(email: $email) {
+    orders {
+      key
+      value
+    }
+  }
+}
+''';
+
+  static const String getSubscriptionsByUserId = r'''
+query GetSubscriptionsByUserId($userId: Int!) {
+  getSubscriptions(userId: $userId) {
+    orders {
+      key
+      value
+    }
+  }
+}
+''';
+
+  // NEW QUERY: Source of truth for course access
+  static const String viewerCourseAccess = r'''
+query ViewerCourseAccess {
+  viewer {
+    databaseId
+    studentsOptions {
+      studentCourse {
+        nodes {
+          id
+        }
+      }
+    }
+  }
+}
+''';
+
   static String submitQuiz = r'''
 mutation SubmitQuiz ($lessonId: Int!, $studentId: Int!,$quizzId:Int!,$quizAnswers:String!){
   submitQuiz(
@@ -157,7 +196,12 @@ query GetAGHelpDesks(\$search: String!) {
 
   static String getSubscriptions = """
   query GetSubscriptions(\$email: String!) {
-    getSubscriptions(email: \$email) 
+    getSubscriptions(email: \$email) {
+        orders {
+          key
+          value
+        }
+    }
   }
 """;
 
@@ -173,23 +217,6 @@ query GetAGHelpDesks(\$search: String!) {
       }
     }
   """;
-
-//   """
-// query NewQuery(\$billingEmail: String!) {
-//   orders(where: {billingEmail: \$billingEmail}) {
-//     nodes {
-//       billing {
-//         email
-//         phone
-//         firstName
-//       }
-//       id
-//       status
-//       date
-//     }
-//   }
-// }
-// """;
 
   static String agHelpDeskBy = """
  query GetAgHelpDeskBy(\$id: ID!){
@@ -558,9 +585,10 @@ query NewQuery {
 }
 ''';
 
+  // UPDATED: Using idType: DATABASE_ID
   static String myCourse = """
 query MyQuery(\$id: ID!) {
-  user(id: \$id) {
+  user(id: \$id, idType: DATABASE_ID) {
     id
     name
     studentsOptions {
@@ -867,5 +895,39 @@ query MyQuery(\$id: ID!) {
 }
 """;
 
+  // Forgot Password Mutations
+  static String sendForgotPasswordOtp = r"""
+mutation SendForgotPasswordOtp($email: String!) {
+  sendForgotPasswordOtp(input: { email: $email }) {
+    success
+    message
+  }
 }
+""";
 
+  static String verifyForgotPasswordOtp = r"""
+mutation VerifyForgotPasswordOtp($email: String!, $otp: String!) {
+  verifyForgotPasswordOtp(input: { email: $email, otp: $otp }) {
+    success
+    message
+    otpToken
+  }
+}
+""";
+
+  static String updatePasswordAfterOtp = r"""
+mutation UpdatePasswordAfterOtp($email: String!, $newPassword: String!, $otpToken: String!) {
+  updatePasswordAfterOtp(input: { email: $email, newPassword: $newPassword, otpToken: $otpToken }) {
+    success
+    message
+    user {
+      id
+      userId
+      email
+      username
+    }
+  }
+}
+""";
+
+}

@@ -18,21 +18,45 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 
 class LiveClassTab extends StatefulWidget {
   const LiveClassTab({super.key});
 
   @override
   State<LiveClassTab> createState() => _LiveClassTabState();
-}
+ }
 
 class _LiveClassTabState extends State<LiveClassTab> {
+    Widget _headerIcon({
+      required BuildContext context,
+      required IconData icon,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          width: 38.w,
+          height: 38.w,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: AppColors.white, size: 20.sp),
+        ),
+      );
+    }
   LiveClassBloc bloc = LiveClassBloc();
   LiveClassesData? liveClassesData;
 
   bool get isUserLoggedIn => user != null;
   bool isCoursePurchased = false;
   bool isUserHasSubscription = false;
+
+  String get token =>
+      StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
 
   @override
   void initState() {
@@ -129,10 +153,10 @@ class _LiveClassTabState extends State<LiveClassTab> {
     if (isUserLoggedIn && isUserHasSubscription) {
       String url = '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
       debugPrint('url===> $url');
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
+      launchUrlInExternalBrowser(url);
     } else if (isUserLoggedIn && isCoursePurchased && DateTime.now().weekday == DateTime.monday) {
       String url = '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
+      launchUrlInExternalBrowser(url);
     } else {
       showAlertDialog();
     }
@@ -199,9 +223,8 @@ class _LiveClassTabState extends State<LiveClassTab> {
                               );
                             } else {
                               String url =
-                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_course_dropdown=10${user != null ? '&student_id=${user?.databaseId}' : ''}';
-                                Get.toNamed(Routes.agWebViewPage, arguments: url);
-                              //launchUrlInBrowser(url);
+                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView&ag_course_dropdown=10${user != null ? '&student_id=${user?.databaseId}' : ''}';
+                                launchUrlInExternalBrowser(url);
                             }
                           }
                         },
@@ -230,12 +253,7 @@ class _LiveClassTabState extends State<LiveClassTab> {
 
 
   Future<void> launchUrlInBrowser(String url) async {
-    var isValidUrl = await canLaunchUrl(Uri.parse(url));
-    if (isValidUrl) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      Get.toNamed(Routes.agWebViewPage, arguments: url);
-    }
+    launchUrlInExternalBrowser(url);
   }
 
   static Widget _customButton({
@@ -275,30 +293,55 @@ class _LiveClassTabState extends State<LiveClassTab> {
   }
 
   Widget _headerView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        customHeader(),
-        Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
-            child: AGBannerAd(adSize: AdSize.banner),
-          ),
-        ),
-        Center(
-          child: Text(
-            'Live Class',
-            textAlign: TextAlign.center,
-            style: AppFontStyle.poppinsMedium.copyWith(
-              fontSize: 27.sp,
-              color: AppColors.black,
-              height: 1.12,
+    return Container(
+      color: const Color(0xFF4D8974),
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 46.h,
+        bottom: 12.h,
+      ),
+      child: SizedBox(
+        height: 48.h,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Left: AzanGuru logo
+            SizedBox(
+              width: 150.w,
+              height: 100.w,
+              child: Image.asset(
+                'assets/images/ag_header_logo.png',
+                fit: BoxFit.contain,
+              ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+            // Right: Bismillah text and menu button
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "﷽",
+                      style: AppFontStyle.dmSansRegular.copyWith(
+                        fontSize: 22.5.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    _headerIcon(
+                      context: context,
+                      icon: Icons.menu_rounded,
+                      onTap: () => Get.toNamed(Routes.menuPage),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

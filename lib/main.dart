@@ -24,6 +24,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 //import 'package:azan_guru_mobile/service/deep_link_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 
 /// Runs the main application.
 Future<void> main() async {

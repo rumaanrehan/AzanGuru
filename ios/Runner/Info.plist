@@ -56,6 +56,8 @@
 	<string>ad09e46a6c4e50ba5a641951143ef586</string>
 	<key>FacebookDisplayName</key>
 	<string>[APP_NAME]</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-2406981209450136~3188907096</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>sms</string>
@@ -102,7 +104,5 @@
 	</array>
 	<key>com.apple.developer.siri</key>
 	<true/>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-2406981209450136~3188907096</string>
 </dict>
 </plist>

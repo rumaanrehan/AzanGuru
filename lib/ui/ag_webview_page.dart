@@ -1,9 +1,11 @@
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
+import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
+import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart'; // <-- NEW
+import 'package:url_launcher/url_launcher.dart';
 
 class AGWebViewPage extends StatefulWidget {
   const AGWebViewPage({super.key});
@@ -28,19 +30,18 @@ class _AGWebViewPageState extends State<AGWebViewPage> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          // KEY: intercept deep links / non-http(s) before WebView tries to load them
           onNavigationRequest: (NavigationRequest request) async {
             final url = request.url;
 
-            // Handle our deep link
+            // Handle deep links
             if (url.startsWith('azanguru://')) {
               final uri = Uri.parse(url);
               await launchUrl(uri, mode: LaunchMode.externalApplication);
-              if (mounted) Get.back(); // close WebView
+              if (mounted) Get.back();
               return NavigationDecision.prevent;
             }
 
-            // Handle other custom schemes
+            // Handle other custom schemes (e.g. mailto, tel, etc.)
             if (!url.startsWith('http://') && !url.startsWith('https://')) {
               final uri = Uri.parse(url);
               await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -49,10 +50,9 @@ class _AGWebViewPageState extends State<AGWebViewPage> {
 
             return NavigationDecision.navigate;
           },
-
           onPageStarted: (value) {
             setState(() => isLoading = true);
-            debugPrint("PAYMENT onPageStarted: $value");
+            debugPrint("Page started: $value");
           },
           onPageFinished: (value) {
             setState(() => isLoading = false);
@@ -61,20 +61,36 @@ class _AGWebViewPageState extends State<AGWebViewPage> {
             debugPrint('WebView error: ${error.description}');
           },
         ),
-      )
-      ..loadRequest(Uri.parse(url));
+      );
+
+    _loadRequest();
   }
 
-  bool _isHttpLike(String u) =>
-      u.startsWith('http://') || u.startsWith('https://');
+  Future<void> _loadRequest() async {
+    // Clear cookies to ensure clean session for JWT auth
+    final cookieManager = WebViewCookieManager();
+    await cookieManager.clearCookies();
 
-  Future<void> _openExternally(String u) async {
-    final uri = Uri.parse(u);
-    // Try opening with external application (so Android/iOS handle the intent)
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      debugPrint('Cannot launch: $u');
+    // Retrieve the auth token to pass the session to the WebView
+    final token = StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
+    // Use databaseId as a stable session identifier for the fingerprint
+    final deviceId = StorageManager.instance.getString(LocalStorageKeys.prefDatabaseId);
+
+    final Map<String, String> headers = {};
+    if (token.isNotEmpty) {
+      // Standard Auth header (kept for compatibility)
+      headers['Authorization'] = 'Bearer $token';
+      // Specific header for the strict token-bound PHP script
+      headers['X-AG-WV-TOKEN'] = token;
+    }
+
+    if (deviceId.isNotEmpty) {
+      // Provide a stable ID for fingerprinting
+      headers['X-AG-DEVICE'] = deviceId;
+    }
+
+    if (mounted) {
+      _controller.loadRequest(Uri.parse(url), headers: headers);
     }
   }
 

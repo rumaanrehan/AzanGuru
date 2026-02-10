@@ -1,11 +1,11 @@
-import 'dart:developer';
-
 import 'package:azan_guru_mobile/bloc/profile_module/profile_bloc/profile_bloc.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
+import 'package:azan_guru_mobile/route/app_routes.dart';
+import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,145 +26,177 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  ProfileBloc profileBloc = ProfileBloc();
-  TextEditingController nameCtrl = TextEditingController();
-  TextEditingController emailCtrl = TextEditingController();
-  TextEditingController phoneCtrl = TextEditingController();
-  TextEditingController langCtrl = TextEditingController();
+  late ProfileBloc profileBloc;
+  late TextEditingController nameCtrl;
+  late TextEditingController emailCtrl;
+  late TextEditingController phoneCtrl;
+  late TextEditingController langCtrl;
+  String? selectedGender;
+  List<MDLGender> mdlGender = [
+    MDLGender(tittle: 'Male'),
+    MDLGender(tittle: 'Female'),
+  ];
+  late Future<void> _loaderTimeoutFuture;
 
   bool get isUserLoggedIn => user != null;
 
   @override
   void initState() {
     super.initState();
+    _initializeControllers();
     if (isUserLoggedIn) {
       profileBloc.add(GetProfileEvent());
     }
   }
 
-  showUserProfile() {
-    if (isUserLoggedIn) {
-      debugPrint(
-          "isUserLoggedIn>>>>>>> ${user?.generalUserOptions?.phoneNumber}");
-      nameCtrl.text =
-          (user?.firstName?.isEmpty ?? true) ? "" : "${user?.firstName}";
+  void _initializeControllers() {
+    profileBloc = ProfileBloc();
+    nameCtrl = TextEditingController();
+    emailCtrl = TextEditingController();
+    phoneCtrl = TextEditingController();
+    langCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    AGLoader.hide();
+    profileBloc.close();
+    nameCtrl.dispose();
+    emailCtrl.dispose();
+    phoneCtrl.dispose();
+    langCtrl.dispose();
+    super.dispose();
+  }
+
+  void _populateUserProfile() {
+    try {
+      if (!isUserLoggedIn) return;
+      
+      nameCtrl.text = user?.firstName?.isEmpty ?? true ? "" : "${user?.firstName}";
       emailCtrl.text = user?.email ?? "";
-      phoneCtrl.text = user?.generalUserOptions?.phoneNumber.toString() ?? '';
-      langCtrl.text = user?.locale == "en_US" ? "English" : "";
+      phoneCtrl.text = user?.generalUserOptions?.phoneNumber?.toString() ?? '';
+      langCtrl.text = user?.locale == "en_US" ? "English" : "Arabic";
       selectedGender = user?.gender ?? "";
+      
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Error populating user profile: $e');
     }
+  }
+
+  void _handleProfileLoading() {
+    if (!mounted) return;
+    if (!AGLoader.isShown) {
+      AGLoader.show(context);
+      // Auto-hide loader after 15 seconds as a safety timeout
+      _loaderTimeoutFuture = Future.delayed(const Duration(seconds: 5), () {
+        if (mounted && AGLoader.isShown) {
+          debugPrint('Loader auto-timeout: hiding loader after 15 seconds');
+          AGLoader.hide();
+        }
+      });
+    }
+  }
+
+  void _handleProfileError(String errorMessage, bool isOpenSetting) {
+    if (AGLoader.isShown) {
+      AGLoader.hide();
+    }
+    Fluttertoast.showToast(msg: errorMessage);
+
+    if (isOpenSetting && mounted) {
+      openAppSettings();
+    }
+    debugPrint('Profile error handled: $errorMessage');
+  }
+
+  void _handleProfileSuccess() {
+    if (AGLoader.isShown) {
+      AGLoader.hide();
+    }
+    Fluttertoast.showToast(msg: 'User profile updated successfully');
+    if (mounted) {
+      Get.offAllNamed(Routes.tabBarPage, arguments: 3);
+      profileBloc.add(GetProfileEvent());
+    }
+  }
+
+  void _handleGetProfileSuccess() {
+    if (AGLoader.isShown) {
+      AGLoader.hide();
+    }
+    _populateUserProfile();
+    debugPrint('Profile loaded successfully');
+  }
+
+  void _handleImagePickerSuccess() {
+    if (AGLoader.isShown) {
+      AGLoader.hide();
+    }
+    Fluttertoast.showToast(msg: 'Profile picture updated successfully');
+    if (mounted) {
+      _populateUserProfile();
+    }
+  }
+
+  void _handleResetPasswordSuccess() {
+    if (AGLoader.isShown) {
+      AGLoader.hide();
+    }
+    Fluttertoast.showToast(msg: 'Password reset email sent to your registered email');
+    debugPrint('Password reset email sent');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(
-        showTitle: true,
-        centerTitle: true,
-        backgroundColor: AppColors.appBgColor,
-        title: 'My Profile',
-        showPrefixIcon: true,
-        onClick: () {
-          Get.back();
-        },
-        // suffixIcons: [
-        //   // customIcon(onClick: () {}, icon: AssetImages.icSetting),
-        //   Padding(
-        //     padding: EdgeInsets.only(left: 25.w, right: 23.w),
-        //     child: customIcon(
-        //         onClick: () {
-        //           Get.toNamed(Routes.notificationPage);
-        //         },
-        //         icon: AssetImages.icNotification,
-        //         iconColor: AppColors.white),
-        //   ),
-        // ],
-      ),
-      body: BlocConsumer<ProfileBloc, ProfileState>(
+      body: BlocListener<ProfileBloc, ProfileState>(
         bloc: profileBloc,
         listener: (context, state) {
           if (state is ProfileLoadingState) {
-            if (!AGLoader.isShown) {
-              AGLoader.show(context);
-            }
+            _handleProfileLoading();
           } else if (state is ProfileErrorState) {
-            if (AGLoader.isShown) {
-              AGLoader.hide();
-            }
-            showNormalDialog(
-              context,
+            _handleProfileError(
               state.errorMessage.toString(),
-              handler: state.isOpenSetting == true
-                  ? (i) {
-                      Navigator.pop(context);
-                      openAppSettings();
-                    }
-                  : null,
-              btnFirst: state.isOpenSetting == true ? 'Open Setting' : null,
-              barrierDismissible: state.isOpenSetting == true ? true : false,
-            );
-          } else if (state is ResetPasswordSuccessState) {
-            if (AGLoader.isShown) {
-              AGLoader.hide();
-            }
-            showNormalDialog(
-              context,
-              'An email has been sent to the registered email with the instructions to reset the password.',
+              state.isOpenSetting ?? false,
             );
           } else if (state is ProfileSuccessState) {
-            if (AGLoader.isShown) {
-              AGLoader.hide();
-            }
-            Fluttertoast.showToast(msg: 'User profile updated successfully');
-
-            profileBloc.add(GetProfileEvent());
+            _handleProfileSuccess();
+          } else if (state is ResetPasswordSuccessState) {
+            _handleResetPasswordSuccess();
           } else if (state is GetProfileState) {
-            if (AGLoader.isShown) {
-              AGLoader.hide();
-            }
-            selectedGender = state.user?.gender ?? '';
-            showUserProfile();
+            _handleGetProfileSuccess();
           } else if (state is ImagePickerLoaded) {
+            _handleImagePickerSuccess();
+          } else {
+            // Fallback: hide loader if it's shown for any unhandled state
             if (AGLoader.isShown) {
+              debugPrint('Unhandled state: ${state.runtimeType} - hiding loader');
               AGLoader.hide();
             }
-            Fluttertoast.showToast(
-                msg: 'User profile picture updated successfully.');
-            showUserProfile();
           }
         },
-        builder: (context, state) {
-          return Column(
-            children: [
-              SizedBox(height: 20.h),
-              _profileView(),
-              SizedBox(height: 20.h),
-              detailView(),
-              SizedBox(height: 20.h),
-              // Expanded(
-              //   child: Stack(
-              //     alignment: Alignment.center,
-              //     children: [
-              //       Align(
-              //         alignment: Alignment.topCenter,
-              //         child: _backgroundView(),
-              //       ),
-              //       if (isUserLoggedIn) ...[
-              //         Column(
-              //           children: [
-              //             SizedBox(height: 230.h),
-              //             detailView(),
-              //           ],
-              //         ),
-              //         _profileView(),
-              //       ],
-              //     ],
-              //   ),
-              // ),
-              // SizedBox(height: 120.h)
-            ],
-          );
-        },
+        child: Stack(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: 90.h),
+              child: Column(
+                children: [
+                  SizedBox(height: 20.h),
+                  _profileView(),
+                  SizedBox(height: 20.h),
+                  _detailView(),
+                  SizedBox(height: 20.h),
+                ],
+              ),
+            ),
+            AgHeaderBar(
+              onMenuTap: () => Get.toNamed(Routes.menuPage),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -213,23 +245,7 @@ class _ProfilePageState extends State<ProfilePage> {
               side: BorderSide(width: 1.w, color: AppColors.profileBorderColor),
             ),
           ),
-          child: (user?.studentsOptions != null) &&
-                  (user?.studentsOptions?.studentPicture != null) &&
-                  (user?.studentsOptions?.studentPicture?.node != null) &&
-                  (user?.studentsOptions?.studentPicture?.node?.mediaItemUrl !=
-                      null)
-              ? CircleAvatar(
-                  foregroundImage: NetworkImage(user?.studentsOptions
-                          ?.studentPicture?.node?.mediaItemUrl ??
-                      ''),
-                  radius: 72.5,
-                )
-              : (user?.avatar?.url?.isBlank ?? false)
-                  ? profileText(userName: getNameInitials())
-                  : CircleAvatar(
-                      foregroundImage: NetworkImage(user?.avatar?.url ?? ''),
-                      radius: 72.5,
-                    ),
+          child: _buildProfileAvatar(),
         ),
         Positioned(
           bottom: 0,
@@ -252,25 +268,76 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String getNameInitials() {
-    if (!(user?.firstName?.isBlank ?? true)) {
-      return '${user?.firstName![0].toUpperCase()}';
-    } else {
-      int nameLimit = 2;
-      String nameRaw = user?.username ?? '';
-      //* Limiting val should not be gt input length (.substring range issue)
-      final max = nameLimit < nameRaw.length ? nameLimit : nameRaw.length;
-      //* Get short name
-      final name = nameRaw.substring(0, max);
-      return name.toUpperCase();
+    try {
+      if (!(user?.firstName?.isBlank ?? true)) {
+        return '${user?.firstName![0].toUpperCase()}';
+      } else {
+        int nameLimit = 2;
+        String nameRaw = user?.username ?? '';
+        final max = nameLimit < nameRaw.length ? nameLimit : nameRaw.length;
+        final name = nameRaw.substring(0, max);
+        return name.toUpperCase();
+      }
+    } catch (e) {
+      debugPrint('Error getting name initials: $e');
+      return 'U';
     }
   }
 
-  List<MDLGender> mdlGender = [
-    MDLGender(tittle: 'Male'),
-    MDLGender(tittle: 'Female'),
-  ];
-  String? selectedGender;
-  Widget detailView() {
+  Widget _buildProfileAvatar() {
+    try {
+      // Try student picture first
+      final studentUrl =
+          user?.studentsOptions?.studentPicture?.node?.mediaItemUrl;
+      if (studentUrl != null && studentUrl.trim().isNotEmpty) {
+        return CircleAvatar(
+          foregroundImage: NetworkImage(studentUrl),
+          radius: 72.5,
+          onForegroundImageError: (exception, stackTrace) {
+            debugPrint('Error loading student picture: $exception');
+          },
+          backgroundColor: AppColors.buttonGreenColor.withOpacity(0.2),
+          child: Text(
+            getNameInitials(),
+            style: TextStyle(
+              color: AppColors.buttonGreenColor,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      }
+
+      // Try user avatar
+      final avatarUrl = user?.avatar?.url;
+      if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+        return CircleAvatar(
+          foregroundImage: NetworkImage(avatarUrl),
+          radius: 72.5,
+          onForegroundImageError: (exception, stackTrace) {
+            debugPrint('Error loading avatar: $exception');
+          },
+          backgroundColor: AppColors.buttonGreenColor.withOpacity(0.2),
+          child: Text(
+            getNameInitials(),
+            style: TextStyle(
+              color: AppColors.buttonGreenColor,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      }
+
+      // Fallback to initials
+      return profileText(userName: getNameInitials());
+    } catch (e) {
+      debugPrint('Error building profile avatar: $e');
+      return profileText(userName: getNameInitials());
+    }
+  }
+
+  Widget _detailView() {
     return Expanded(
       child: Container(
         margin: EdgeInsets.only(left: 20.w, right: 20.w),
@@ -293,118 +360,35 @@ class _ProfilePageState extends State<ProfilePage> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              _editRow(
+              _buildTextInput(
                 title: 'Name',
                 controller: nameCtrl,
-                onTap: () {},
-                onChanged: (value) {
-                  // profileBloc.add(
-                  //   UpdateProfileEvent(
-                  //     displayName: value,
-                  //     lastName: value,
-                  //     email: user?.email ?? "",
-                  //   ),
-                  // );
-                },
+                readOnly: false,
               ),
               const SizedBox(height: 15),
-              _editRow(
+              _buildTextInput(
                 title: 'Email',
                 controller: emailCtrl,
-                onTap: () {},
-                onChanged: (value) {
-                  // profileBloc.add(
-                  //   UpdateProfileEvent(
-                  //     displayName: "${user?.firstName} ${user?.lastName}",
-                  //     lastName: user?.lastName ?? "",
-                  //     email: value,
-                  //   ),
-                  // );
-                },
+                readOnly: false,
               ),
               const SizedBox(height: 15),
-              _editRow(
+              _buildTextInput(
                 title: 'Phone',
                 controller: phoneCtrl,
                 readOnly: false,
-                onTap: () {},
-                onChanged: (value) {},
               ),
               const SizedBox(height: 15),
-              _editRow(
+              _buildTextInput(
                 title: 'Language',
                 controller: langCtrl,
                 readOnly: true,
-                onTap: () {},
-                onChanged: (value) {},
               ),
               const SizedBox(height: 15),
-              Padding(
-                padding: EdgeInsets.only(left: 2.w),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Gender',
-                      style: AppFontStyle.poppinsRegular
-                          .copyWith(color: AppColors.black),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 22,
-                      width: double.infinity,
-                      child: GridView.builder(
-                        padding: EdgeInsets.only(left: 3.w),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: mdlGender.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 0,
-                          mainAxisSpacing: 0,
-                          mainAxisExtent: 25.h,
-                        ),
-                        itemBuilder: (BuildContext context, int index) {
-                          return _genderSelectionRow(
-                              onTap: () {
-                                for (int i = 0; i < mdlGender.length; i++) {
-                                  mdlGender[i].isSelected = false;
-                                }
-                                setState(() {
-                                  mdlGender[index].isSelected = true;
-                                  selectedGender = mdlGender[index].tittle;
-                                });
-                              },
-                              data: mdlGender[index],
-                              selectedIndex: selectedGender?.toLowerCase() ==
-                                      'Male'.toLowerCase()
-                                  ? 0
-                                  : selectedGender?.toLowerCase() ==
-                                          'Female'.toLowerCase()
-                                      ? 1
-                                      : 2,
-                              index: index);
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
+              _buildGenderSelection(),
               Padding(
                 padding: EdgeInsets.only(top: 30.h, bottom: 15.h),
                 child: customButton(
-                  onTap: () {
-                    profileBloc.add(
-                      UpdateProfileEvent(
-                        displayName: nameCtrl.text,
-                        lastName: '',
-                        email: emailCtrl.text,
-                        gender: selectedGender ?? '',
-                        phone: phoneCtrl.text,
-                      ),
-                    );
-                  },
+                  onTap: _handleUpdateProfile,
                   showBorder: true,
                   borderColor: AppColors.alertButtonColor,
                   boxColor: AppColors.alertButtonColor,
@@ -422,14 +406,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Padding(
                 padding: EdgeInsets.only(bottom: 15.h),
                 child: customButton(
-                  onTap: () {
-                    // Get.toNamed(Routes.changePasswordPage);
-                    profileBloc.add(
-                      ResetUserPasswordEvent(
-                        username: user?.username ?? '',
-                      ),
-                    );
-                  },
+                  onTap: _handleResetPassword,
                   showBorder: true,
                   borderColor: AppColors.alertButtonColor,
                   boxColor: Colors.transparent,
@@ -445,9 +422,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               customButton(
-                onTap: () {
-                  Share.share('Welcome!');
-                },
+                onTap: _handleShareApp,
                 showBorder: true,
                 borderColor: AppColors.alertButtonColor,
                 boxColor: Colors.transparent,
@@ -469,62 +444,89 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _editRow({
+  Widget _buildTextInput({
     required String title,
-    TextEditingController? controller,
-    void Function()? onTap,
-    void Function(String value)? onChanged,
-    bool readOnly = false,
+    required TextEditingController controller,
+    required bool readOnly,
   }) {
-    return InkWell(
-      onTap: onTap,
-      splashColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      highlightColor: Colors.transparent,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: AppFontStyle.poppinsRegular.copyWith(
+            color: AppColors.appBgColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          readOnly: readOnly,
+          controller: controller,
+          style: AppFontStyle.poppinsMedium.copyWith(
+            color: AppColors.appBgColor,
+          ),
+          maxLines: 1,
+          key: ValueKey(title),
+          decoration: InputDecoration(
+            hintText: title,
+            hintStyle: AppFontStyle.poppinsRegular.copyWith(
+              color: AppColors.greyColor,
+            ),
+            suffixIcon: readOnly
+                ? null
+                : Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(AssetImages.icEdit),
+                        SizedBox(width: 4.w),
+                        Text(
+                          'Edit',
+                          style: AppFontStyle.poppinsRegular.copyWith(
+                            color: AppColors.appBgColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderSelection() {
+    return Padding(
+      padding: EdgeInsets.only(left: 2.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            'Gender',
             style: AppFontStyle.poppinsRegular.copyWith(
-              color: AppColors.appBgColor,
+              color: AppColors.black,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-          TextFormField(
-            readOnly: readOnly,
-            controller: controller,
-            style: AppFontStyle.poppinsMedium.copyWith(
-              color: AppColors.appBgColor,
-            ),
-            maxLines: 1,
-            onChanged: onChanged,
-            decoration: InputDecoration(
-              hintText: title,
-              hintStyle: AppFontStyle.poppinsRegular.copyWith(
-                color: AppColors.greyColor,
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: List.generate(
+              mdlGender.length,
+              (index) => _buildGenderOption(
+                title: mdlGender[index].tittle ?? '',
+                isSelected: selectedGender?.toLowerCase() ==
+                    mdlGender[index].tittle?.toLowerCase(),
+                onTap: () {
+                  setState(() {
+                    selectedGender = mdlGender[index].tittle;
+                  });
+                },
               ),
-              suffixIcon: readOnly
-                  ? null
-                  : SizedBox(
-                      width: 50.w,
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(right: 2.w, left: 3.w),
-                            child: SvgPicture.asset(AssetImages.icEdit),
-                          ),
-                          Text(
-                            'Edit',
-                            style: AppFontStyle.poppinsRegular.copyWith(
-                              color: AppColors.appBgColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
             ),
           ),
         ],
@@ -532,72 +534,128 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _genderSelectionRow(
-      {Function()? onTap,
-      MDLGender? data,
-      required int selectedIndex,
-      required int index}) {
-    return InkWell(
-      splashColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      onTap: onTap,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            width: 22.w,
-            height: 22.h,
-            margin: EdgeInsets.only(right: 10.w),
-            decoration: BoxDecoration(
-              color: selectedIndex == index
-                  ? AppColors.appBgColor
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-              border: Border.all(
-                width: 3.w,
+  Widget _buildGenderOption({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Container(
+              width: 22.w,
+              height: 22.h,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.appBgColor : Colors.transparent,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  width: 2.w,
+                  color: AppColors.appBgColor,
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Text(
+              title,
+              style: AppFontStyle.poppinsMedium.copyWith(
                 color: AppColors.appBgColor,
               ),
             ),
-          ),
-          Text(
-            data?.tittle ?? "",
-            style: AppFontStyle.poppinsMedium
-                .copyWith(color: AppColors.appBgColor),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  void _handleUpdateProfile() {
+    try {
+      if (nameCtrl.text.trim().isEmpty) {
+        Fluttertoast.showToast(msg: 'Please enter your name');
+        return;
+      }
+      if (emailCtrl.text.trim().isEmpty) {
+        Fluttertoast.showToast(msg: 'Please enter your email');
+        return;
+      }
+
+      profileBloc.add(
+        UpdateProfileEvent(
+          displayName: nameCtrl.text.trim(),
+          lastName: '',
+          email: emailCtrl.text.trim(),
+          gender: selectedGender ?? '',
+          phone: phoneCtrl.text.trim(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error updating profile: $e');
+      Fluttertoast.showToast(msg: 'Error updating profile');
+    }
+  }
+
+  void _handleResetPassword() {
+    try {
+      if (user == null || (user?.username?.isEmpty ?? true)) {
+        Fluttertoast.showToast(msg: 'User information not available');
+        return;
+      }
+
+      profileBloc.add(
+        ResetUserPasswordEvent(
+          username: user?.username ?? '',
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error resetting password: $e');
+      Fluttertoast.showToast(msg: 'Error resetting password');
+    }
+  }
+
+  void _handleShareApp() {
+    try {
+      Share.share(
+        'Check out this amazing app! Download now.',
+      );
+    } catch (e) {
+      debugPrint('Error sharing app: $e');
+      Fluttertoast.showToast(msg: 'Error sharing app');
+    }
+  }
+
   void _showPicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext bc) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Photo Library'),
-                onTap: () {
-                  profileBloc.add(PickImage(fromCamera: false));
-                  Navigator.of(context).pop();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Camera'),
-                onTap: () {
-                  profileBloc.add(PickImage(fromCamera: true));
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    try {
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return SafeArea(
+            child: Wrap(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Photo Library'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    profileBloc.add(PickImage(fromCamera: false));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Camera'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    profileBloc.add(PickImage(fromCamera: true));
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint('Error showing picker: $e');
+      Fluttertoast.showToast(msg: 'Error opening image picker');
+    }
   }
 }

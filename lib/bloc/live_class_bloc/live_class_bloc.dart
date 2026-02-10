@@ -58,7 +58,7 @@ class LiveClassBloc extends Bloc<LiveClassEvent, LiveClassState> {
     GetSubscriptionStatusEvent event,
     Emitter emit,
   ) async {
-    graphQLService.initClient(addToken: user != null);
+    graphQLService.initClient();
     // emit(ShowLiveClassLoadingState());
     final result = await graphQLService.performQuery(
       AzanGuruQueries.getOrderStatus,
