@@ -26,9 +26,28 @@ class LiveClassTab extends StatefulWidget {
 
   @override
   State<LiveClassTab> createState() => _LiveClassTabState();
-}
+ }
 
 class _LiveClassTabState extends State<LiveClassTab> {
+    Widget _headerIcon({
+      required BuildContext context,
+      required IconData icon,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          width: 38.w,
+          height: 38.w,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: AppColors.white, size: 20.sp),
+        ),
+      );
+    }
   LiveClassBloc bloc = LiveClassBloc();
   LiveClassesData? liveClassesData;
 
@@ -274,30 +293,55 @@ class _LiveClassTabState extends State<LiveClassTab> {
   }
 
   Widget _headerView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        customHeader(),
-        Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.h),
-            child: AGBannerAd(adSize: AdSize.banner),
-          ),
-        ),
-        Center(
-          child: Text(
-            'Live Class',
-            textAlign: TextAlign.center,
-            style: AppFontStyle.poppinsMedium.copyWith(
-              fontSize: 27.sp,
-              color: AppColors.black,
-              height: 1.12,
+    return Container(
+      color: const Color(0xFF4D8974),
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 46.h,
+        bottom: 12.h,
+      ),
+      child: SizedBox(
+        height: 48.h,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Left: AzanGuru logo
+            SizedBox(
+              width: 150.w,
+              height: 100.w,
+              child: Image.asset(
+                'assets/images/ag_header_logo.png',
+                fit: BoxFit.contain,
+              ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+            // Right: Bismillah text and menu button
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "﷽",
+                      style: AppFontStyle.dmSansRegular.copyWith(
+                        fontSize: 22.5.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    _headerIcon(
+                      context: context,
+                      icon: Icons.menu_rounded,
+                      onTap: () => Get.toNamed(Routes.menuPage),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

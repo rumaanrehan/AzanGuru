@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
 import 'package:azan_guru_mobile/common/util.dart';
-import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/constant/language_key.dart';
@@ -11,6 +10,7 @@ import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
 import 'package:azan_guru_mobile/ui/common/course_tile.dart';
+import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:azan_guru_mobile/ui/model/ag_categories_data.dart';
 import 'package:azan_guru_mobile/ui/model/lesson_progress_update.dart';
@@ -18,7 +18,6 @@ import 'package:azan_guru_mobile/ui/model/mdl_course.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -203,75 +202,14 @@ class _MyCoursePageState extends State<MyCoursePage> {
                   ],
                 ),
               ),
-              // Header bar synchronized with HomePage
-              Container(
-                color: const Color(0xFF4D8974),
-                padding: EdgeInsets.only(
-                  left: 20.w,
-                  right: 20.w,
-                  top: 46.h,
-                  bottom: 12.h,
-                ),
-                child: SizedBox(
-                  height: 48.h,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Left: Home button
-                      _headerIcon(
-                        context: context,
-                        icon: Icons.home_rounded,
-                        onTap: () => Get.offAllNamed(Routes.tabBarPage),
-                      ),
-
-                      // Center: Bismillah text
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            "﷽",
-                            textAlign: TextAlign.center,
-                            style: AppFontStyle.dmSansRegular.copyWith(
-                              fontSize: 22.5.sp,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Right: Menu button
-                      _headerIcon(
-                        context: context,
-                        icon: Icons.menu_rounded,
-                        onTap: () => Get.toNamed(Routes.menuPage),
-                      ),
-                    ],
-                  ),
-                ),
+              // Header bar (shared)
+              AgHeaderBar(
+                onMenuTap: () => Get.toNamed(Routes.menuPage),
               ),
             ],
           ),
         );
       },
-    );
-  }
-  Widget _headerIcon({
-    required BuildContext context,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        width: 38.w,
-        height: 38.w,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: AppColors.white, size: 20.sp),
-      ),
     );
   }
 

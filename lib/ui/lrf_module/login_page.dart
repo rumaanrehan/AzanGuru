@@ -267,6 +267,23 @@ class _LoginPageState extends State<LoginPage> {
           obscureText: true,
           hintTexts: LanguageKey.password.tr,
         ),
+        SizedBox(height: 12.h),
+        Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: () {
+              Get.toNamed(Routes.forgotPasswordPage);
+            },
+            child: Text(
+              LanguageKey.forgetPasswordResetNow.tr,
+              style: AppFontStyle.poppinsRegular.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.white,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
         SizedBox(height: 20.h),
         customButton(
           onTap: _submitPasswordLogin,

@@ -7,13 +7,14 @@ import 'package:azan_guru_mobile/constant/language_key.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
+import 'package:azan_guru_mobile/ui/model/user_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
-
+import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
 
@@ -23,14 +24,16 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   String version = '';
-  // Replace with your user model and fetching logic
-  final user = null; // TODO: Replace with actual user fetching logic
+  UserData? _userData;
 
-  bool get isUserLoggedIn => user != null;
+  bool get isUserLoggedIn =>
+      StorageManager.instance.getBool(LocalStorageKeys.prefUserLogin) &&
+      _userData != null;
 
   @override
   void initState() {
     super.initState();
+    _userData = StorageManager.instance.getLoginUser();
     getAppVersion();
   }
 
@@ -47,212 +50,216 @@ class _MenuPageState extends State<MenuPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgLightWhitColor,
-      appBar: customAppBar(
-        showTitle: true,
-        centerTitle: true,
-        backgroundColor: AppColors.appBgColor,
-        title: 'Profile',
-        showPrefixIcon: true,
-        onClick: () {
-          Get.back();
-        },
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
+      body: Column(
+        children: [
+          AgHeaderBar(
+            onMenuTap: () {},
+          ),
+          Expanded(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 30.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        height: 120.w,
-                        width: 120.w,
-                        padding: EdgeInsets.all(5.h),
-                        clipBehavior: Clip.hardEdge,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.logoColor,
-                        ),
-                        child: SvgPicture.asset(
-                          AssetImages.icProfile,
-                          colorFilter: ColorFilter.mode(
-                            AppColors.white,
-                            BlendMode.srcIn,
-                          ),
+                  padding: EdgeInsets.only(left: 25.w, right: 25.w, top: 30.h, bottom: 150.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      height: 120.w,
+                      width: 120.w,
+                      padding: EdgeInsets.all(5.h),
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.logoColor,
+                      ),
+                      child: SvgPicture.asset(
+                        AssetImages.icProfile,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.white,
+                          BlendMode.srcIn,
                         ),
                       ),
-                      SizedBox(height: 10.h),
-                      if (isUserLoggedIn) ...[
-                        Text(
-                          user?.name ?? 'User Name',
-                          style: AppFontStyle.poppinsMedium.copyWith(
-                            fontSize: 22.sp,
-                            color: AppColors.appBgColor,
-                          ),
-                        ),
-                        SizedBox(height: 5.h),
-                        Text(
-                          user?.email ?? 'user@email.com',
-                          style: AppFontStyle.poppinsRegular.copyWith(
-                            fontSize: 16.sp,
-                            color: AppColors.greyColor,
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          'Please login to view your profile.',
-                          style: AppFontStyle.poppinsRegular.copyWith(
-                            fontWeight: FontWeight.w100,
-                            fontSize: 18.sp,
-                            color: AppColors.appBgColor,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 16.h),
-                        customButton(
-                          width: 200.w,
-                          onTap: () {
-                            hideKeyboard(context);
-                            Get.offAllNamed(Routes.login);
-                            StorageManager.instance.setBool(
-                              LocalStorageKeys.prefGuestLogin,
-                              false,
-                            );
-                            StorageManager.instance.clear();
-                          },
-                          buttonText: LanguageKey.loginNow.tr,
-                        ),
-                      ],
-                      SizedBox(height: 25.h),
-                      _sectionTitle('Account'),
-                      if (isUserLoggedIn) ...[
-                        _menuButton(
-                          icon: Icons.person,
-                          label: 'My Profile',
-                          subtitle: 'Edit your personal information',
-                          onTap: () => Get.toNamed(Routes.myProfile),
-                        ),
-                        _menuButton(
-                          icon: Icons.settings,
-                          label: 'App Settings',
-                          subtitle: 'Notifications, preferences, and more',
-                          onTap: () => Get.toNamed(Routes.settingPage),
-                        ),
-                        _menuButton(
-                          icon: Icons.history,
-                          label: 'Enrollment History',
-                          subtitle: 'View your subscriptions',
-                          onTap: () => Get.toNamed(Routes.mySubscription),
-                        ),
-                        _menuButton(
-                          icon: Icons.delete_outline,
-                          label: 'Delete Account',
-                          subtitle: 'Permanently remove your account',
-                          onTap: () => Get.toNamed(Routes.deleteAccountDetailPage),
-                          color: AppColors.red,
-                        ),
-                        _menuButton(
-                          icon: Icons.logout,
-                          label: 'Logout',
-                          subtitle: 'Sign out of your account',
-                          onTap: () {
-                            Get.offAllNamed(Routes.login);
-                            StorageManager.instance.setBool(
-                              LocalStorageKeys.prefUserLogin,
-                              false,
-                            );
-                            StorageManager.instance.setString(
-                              LocalStorageKeys.prefAuthToken,
-                              '',
-                            );
-                            StorageManager.instance.clear();
-                          },
-                          color: AppColors.red,
-                        ),
-                      ] else ...[
-                        _menuButton(
-                          icon: Icons.settings,
-                          label: 'App Settings',
-                          subtitle: 'Notifications, preferences, and more',
-                          onTap: () => Get.toNamed(Routes.settingPage),
-                        ),
-                      ],
-                      SizedBox(height: 10.h),
-                      _sectionTitle('Support'),
-                      _menuButton(
-                        icon: Icons.support_agent,
-                        label: 'Support',
-                        subtitle: 'Help center and FAQs',
-                        onTap: () => Get.toNamed(Routes.helpPage),
-                      ),
-                      _menuButton(
-                        icon: Icons.language,
-                        label: 'Go to Website',
-                        subtitle: 'Visit azanguru.com',
-                        onTap: () => openCallingApp('https://azanguru.com/'),
-                      ),
-                      _menuButton(
-                        icon: Icons.phone,
-                        label: 'Call Us',
-                        subtitle: '+91 7419223123',
-                        onTap: () => openCallingApp('tel:+91 7419223123'),
-                      ),
-                      _menuButton(
-                        icon: Icons.share,
-                        label: 'Share App',
-                        subtitle: 'Invite your friends',
-                        onTap: () => Share.share('Welcome!'),
-                      ),
-                      SizedBox(height: 10.h),
-                      _sectionTitle('About'),
-                      _menuButton(
-                        icon: Icons.info_outline,
-                        label: 'About App',
-                        subtitle: 'Version $version',
-                        onTap: () => _showAboutDialog(context),
-                      ),
-                      _menuButton(
-                        icon: Icons.description_outlined,
-                        label: 'Terms & Conditions',
-                        subtitle: 'Read the terms of service',
-                        onTap: () => openCallingApp(
-                          'https://azanguru.com/terms-condition/',
-                        ),
-                      ),
-                      _menuButton(
-                        icon: Icons.privacy_tip_outlined,
-                        label: 'Privacy Policy',
-                        subtitle: 'How we use your data',
-                        onTap: () => openCallingApp(
-                          'https://azanguru.com/privacy-policy/',
-                        ),
-                      ),
-                      _menuButton(
-                        icon: Icons.assignment_return_outlined,
-                        label: 'Refund & Cancellation',
-                        subtitle: 'Review refund policy',
-                        onTap: () => openCallingApp(
-                          'https://azanguru.com/refund_returns/',
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
+                    ),
+                    SizedBox(height: 10.h),
+                    if (isUserLoggedIn) ...[
                       Text(
-                        'App Version $version',
+                        _displayName(),
+                        style: AppFontStyle.poppinsMedium.copyWith(
+                          fontSize: 22.sp,
+                          color: AppColors.appBgColor,
+                        ),
+                      ),
+                      SizedBox(height: 5.h),
+                      Text(
+                        _userData?.user?.email ??
+                            _userData?.user?.username ??
+                            'user@email.com',
                         style: AppFontStyle.poppinsRegular.copyWith(
-                          fontSize: 14.sp,
+                          fontSize: 16.sp,
                           color: AppColors.greyColor,
                         ),
                       ),
+                      if (_displayPhone() != null) ...[
+                        SizedBox(height: 4.h),
+                        Text(
+                          _displayPhone()!,
+                          style: AppFontStyle.poppinsRegular.copyWith(
+                            fontSize: 14.sp,
+                            color: AppColors.greyColor,
+                          ),
+                        ),
+                      ],
+                    ] else ...[
+                      Text(
+                        'Please login to view your profile.',
+                        style: AppFontStyle.poppinsRegular.copyWith(
+                          fontWeight: FontWeight.w100,
+                          fontSize: 18.sp,
+                          color: AppColors.appBgColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16.h),
+                      customButton(
+                        width: 200.w,
+                        onTap: () {
+                          hideKeyboard(context);
+                          Get.offAllNamed(Routes.login);
+                          StorageManager.instance.setBool(
+                            LocalStorageKeys.prefGuestLogin,
+                            false,
+                          );
+                          StorageManager.instance.clear();
+                        },
+                        buttonText: LanguageKey.loginNow.tr,
+                      ),
                     ],
-                  ),
+                    SizedBox(height: 25.h),
+                    _sectionTitle('Account'),
+                    if (isUserLoggedIn) ...[
+                      _menuButton(
+                        icon: Icons.person,
+                        label: 'My Profile',
+                        subtitle: 'Edit your personal information',
+                        onTap: () => Get.toNamed(Routes.myProfile),
+                      ),
+                      _menuButton(
+                        icon: Icons.settings,
+                        label: 'App Settings',
+                        subtitle: 'Notifications, preferences, and more',
+                        onTap: () => Get.toNamed(Routes.settingPage),
+                      ),
+                      _menuButton(
+                        icon: Icons.history,
+                        label: 'Enrollment History',
+                        subtitle: 'View your subscriptions',
+                        onTap: () => Get.toNamed(Routes.mySubscription),
+                      ),
+                      _menuButton(
+                        icon: Icons.delete_outline,
+                        label: 'Delete Account',
+                        subtitle: 'Permanently remove your account',
+                        onTap: () => Get.toNamed(Routes.deleteAccountDetailPage),
+                        color: AppColors.red,
+                      ),
+                      _menuButton(
+                        icon: Icons.logout,
+                        label: 'Logout',
+                        subtitle: 'Sign out of your account',
+                        onTap: () {
+                          Get.offAllNamed(Routes.login);
+                          StorageManager.instance.setBool(
+                            LocalStorageKeys.prefUserLogin,
+                            false,
+                          );
+                          StorageManager.instance.setString(
+                            LocalStorageKeys.prefAuthToken,
+                            '',
+                          );
+                          StorageManager.instance.clear();
+                        },
+                        color: AppColors.red,
+                      ),
+                    ] else ...[
+                      _menuButton(
+                        icon: Icons.settings,
+                        label: 'App Settings',
+                        subtitle: 'Notifications, preferences, and more',
+                        onTap: () => Get.toNamed(Routes.settingPage),
+                      ),
+                    ],
+                    SizedBox(height: 10.h),
+                    _sectionTitle('Support'),
+                    _menuButton(
+                      icon: Icons.support_agent,
+                      label: 'Support',
+                      subtitle: 'Help center and FAQs',
+                      onTap: () => Get.toNamed(Routes.helpPage),
+                    ),
+                    _menuButton(
+                      icon: Icons.language,
+                      label: 'Go to Website',
+                      subtitle: 'Visit azanguru.com',
+                      onTap: () => openCallingApp('https://azanguru.com/'),
+                    ),
+                    _menuButton(
+                      icon: Icons.phone,
+                      label: 'Call Us',
+                      subtitle: '+91 7419223123',
+                      onTap: () => openCallingApp('tel:+91 7419223123'),
+                    ),
+                    _menuButton(
+                      icon: Icons.share,
+                      label: 'Share App',
+                      subtitle: 'Invite your friends',
+                      onTap: () => Share.share('Welcome!'),
+                    ),
+                    SizedBox(height: 10.h),
+                    _sectionTitle('About'),
+                    _menuButton(
+                      icon: Icons.info_outline,
+                      label: 'About App',
+                      subtitle: 'Version $version',
+                      onTap: () => _showAboutDialog(context),
+                    ),
+                    _menuButton(
+                      icon: Icons.description_outlined,
+                      label: 'Terms & Conditions',
+                      subtitle: 'Read the terms of service',
+                      onTap: () => openCallingApp(
+                        'https://azanguru.com/terms-condition/',
+                      ),
+                    ),
+                    _menuButton(
+                      icon: Icons.privacy_tip_outlined,
+                      label: 'Privacy Policy',
+                      subtitle: 'How we use your data',
+                      onTap: () => openCallingApp(
+                        'https://azanguru.com/privacy-policy/',
+                      ),
+                    ),
+                    _menuButton(
+                      icon: Icons.assignment_return_outlined,
+                      label: 'Refund & Cancellation',
+                      subtitle: 'Review refund policy',
+                      onTap: () => openCallingApp(
+                        'https://azanguru.com/refund_returns/',
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      'App Version $version',
+                      style: AppFontStyle.poppinsRegular.copyWith(
+                        fontSize: 14.sp,
+                        color: AppColors.greyColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -352,6 +359,32 @@ class _MenuPageState extends State<MenuPage> {
         ),
       ),
     );
+  }
+
+  String _displayName() {
+    final user = _userData?.user;
+    if (user == null) return 'User Name';
+    final fullName = [
+      if ((user.firstName ?? '').isNotEmpty) user.firstName,
+      if ((user.lastName ?? '').isNotEmpty) user.lastName,
+    ].join(' ');
+    if (fullName.isNotEmpty) return fullName;
+    return user.name ??
+        user.username ??
+        user.nicename ??
+        user.nickname ??
+        'User Name';
+  }
+
+  String? _displayPhone() {
+    final user = _userData?.user;
+    final phone = user?.phone;
+    if (phone != null && phone.isNotEmpty) return phone;
+    final number = user?.generalUserOptions?.phoneNumber;
+    if (number != null && number.toString().isNotEmpty) {
+      return number.toString();
+    }
+    return null;
   }
 
   void _showAboutDialog(BuildContext context) {

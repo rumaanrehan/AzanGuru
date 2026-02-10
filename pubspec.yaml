@@ -84,6 +84,7 @@ dependencies:
   google_mobile_ads: ^5.0.0
   marquee: ^2.2.3
   dio: ^5.4.0
+  gif: ^2.3.0
 
   # flutter_in_app_purchase_helper:
 #  firebase_analytics: ^10.8.9

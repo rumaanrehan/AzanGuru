@@ -3,17 +3,16 @@ import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
-import 'package:azan_guru_mobile/ui/help_module/help_page.dart';
 import 'package:azan_guru_mobile/ui/home_module/home_page.dart';
 import 'package:azan_guru_mobile/ui/home_module/live_class_tab.dart';
 import 'package:azan_guru_mobile/ui/my_course/my_course_page.dart';
+import 'package:azan_guru_mobile/ui/profile_module/menu_module/menu_page.dart';
 import 'package:azan_guru_mobile/ui/tabbar/tabbar_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-
 class TabBarPage extends StatefulWidget {
   final int pageIndex;
 
@@ -51,7 +50,11 @@ class _TabBarPageState extends State<TabBarPage> {
 
   void _setIndex(index) {
     _selectedIndex = index;
-    TabBarController.instance.pageController.jumpToPage(index);
+    TabBarController.instance.pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void onPageChanged(int index) {
@@ -68,17 +71,17 @@ class _TabBarPageState extends State<TabBarPage> {
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Scaffold(
-          extendBody: true,
-          backgroundColor: AppColors.white,
+          extendBody: false,
+          backgroundColor: AppColors.tabBarColor,
           body: PageView(
             controller: TabBarController.instance.pageController,
             onPageChanged: onPageChanged,
-            physics: const NeverScrollableScrollPhysics(),
+            physics: const BouncingScrollPhysics(),
             children: const [
               HomePage(),
               MyCoursePage(),
               LiveClassTab(),
-              HelpPage(),
+              MenuPage(),
             ],
           ),
           bottomNavigationBar: _buildTabBar(),
@@ -134,8 +137,8 @@ class _TabBarPageState extends State<TabBarPage> {
             ),
             _divider(),
             _tabBarIcon(
-              'Support',
-              icon: AssetImages.icHelp,
+              'Profile',
+              icon: AssetImages.icProfile,
               onTap: () {
                 _onItemTapped(3);
               },

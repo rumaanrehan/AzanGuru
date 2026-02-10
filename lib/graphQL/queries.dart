@@ -895,4 +895,39 @@ query MyQuery(\$id: ID!) {
 }
 """;
 
+  // Forgot Password Mutations
+  static String sendForgotPasswordOtp = r"""
+mutation SendForgotPasswordOtp($email: String!) {
+  sendForgotPasswordOtp(input: { email: $email }) {
+    success
+    message
+  }
+}
+""";
+
+  static String verifyForgotPasswordOtp = r"""
+mutation VerifyForgotPasswordOtp($email: String!, $otp: String!) {
+  verifyForgotPasswordOtp(input: { email: $email, otp: $otp }) {
+    success
+    message
+    otpToken
+  }
+}
+""";
+
+  static String updatePasswordAfterOtp = r"""
+mutation UpdatePasswordAfterOtp($email: String!, $newPassword: String!, $otpToken: String!) {
+  updatePasswordAfterOtp(input: { email: $email, newPassword: $newPassword, otpToken: $otpToken }) {
+    success
+    message
+    user {
+      id
+      userId
+      email
+      username
+    }
+  }
+}
+""";
+
 }
