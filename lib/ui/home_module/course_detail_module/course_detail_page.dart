@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:azan_guru_mobile/bloc/course_detail_bloc/course_detail_bloc.dart';
@@ -10,6 +9,7 @@ import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/ui/common/ag_image_view.dart';
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:azan_guru_mobile/ui/help_module/ask_live_teacher_dialog.dart';
 import 'package:azan_guru_mobile/ui/model/ag_course_detail.dart';
@@ -25,12 +25,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:pod_player/pod_player.dart';
 import 'package:readmore/readmore.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-
 
 class CourseDetailPage extends StatefulWidget {
   const CourseDetailPage({super.key});
@@ -47,7 +44,9 @@ class _CourseDetailPageState extends State<CourseDetailPage>
 
   bool get isMonthlyCourse {
     final name = courseData?.name?.toLowerCase() ?? '';
-    return name.contains('primary') || name.contains('race') || name.contains('advanced');
+    return name.contains('primary') ||
+        name.contains('race') ||
+        name.contains('advanced');
   }
 
   CourseDetailBloc get bloc => context.read<CourseDetailBloc>();
@@ -116,13 +115,13 @@ class _CourseDetailPageState extends State<CourseDetailPage>
         }
         if (found) break;
       }
-      
+
       if (isCoursePurchased != found || studentProgress != progress) {
         setState(() {
           isCoursePurchased = found;
           studentProgress = progress;
         });
-        
+
         // If status changed to purchased, ensure lessons are updated
         if (isCoursePurchased && agCourseLessonList != null) {
           updateCurrentSelectedLesson();
@@ -166,172 +165,182 @@ class _CourseDetailPageState extends State<CourseDetailPage>
         ),
       ],
       child: BlocConsumer<CourseDetailBloc, CourseDetailState>(
-      listener: (context, state) {
-        if (state is ShowCourseDetailLoadingState) {
-          if (!AGLoader.isShown) {
-            AGLoader.show(context);
-          }
-        } else if (state is HideCourseDetailLoadingState) {
-          if (AGLoader.isShown) {
-            AGLoader.hide();
-          }
-        } else if (state is GetCourseDetailState) {
-          courseData = state.agCourseDetail;
-          databaseId = courseData?.databaseId;
-
-          // studentCompletedLessons =
-          //     courseData?.courseTypeImage?.completedLessons?.nodes ?? [];
-          bloc.add(GetCourseAmountEvent(courseId: courseId));
-          bloc.add(GetCourseLessonsEvent(courseId: courseId));
-          _controller = VideoPlayerController.networkUrl(
-            Uri.parse(courseData?.courseTypeImage?.videoUrl ?? ''),
-          )
-            ..addListener(() {})
-            ..initialize().then((value) {
-              setState(() {
-                _chewieController = ChewieController(
-                  videoPlayerController: _controller!,
-                  autoPlay: false,
-                  looping: false,
-                  allowFullScreen: false,
-                  draggableProgressBar: false,
-                  allowMuting: false,
-                  allowPlaybackSpeedChanging: false,
-                  // additionalOptions: (context) {
-                  //   return <OptionItem>[];
-                  // },
-                  // optionsBuilder: (context, chewieOptions) {},
-                  // customControls: _buildOverlay(),
-                );
-              });
-            });
-        } else if (state is GetCourseAmountState) {
-          courseAmountResponseModel = state.courseAmountResponseModel;
-        } else if (state is UpdateCompletedLessonState) {
-          Lesson? lesson = agCourseLessonList?.agCourses?.nodes
-              ?.firstWhereOrNull((element) => element.id == state.lessonId);
-          if (lesson != null) {
-            lesson.completed = true;
-          }
-          // studentCompletedLessons?.add(LessonNodes(id: state.lessonId));
-          // context.read<MyCourseBloc>().add(
-          //       UpdateMyCourseCompletedEvent(
-          //         courseId: courseId,
-          //         lessonId: state.lessonId,
-          //       ),
-          //     );
-          updateCurrentSelectedLesson();
-        } else if (state is GetCourseLessonsState) {
-          agCourseLessonList = state.agCourseLessonList;
-          if (isCoursePurchased) {
-            updateCurrentSelectedLesson();
-            _scrollController.animateTo(
-              MediaQuery.of(context).size.height / 1.7,
-              duration: const Duration(milliseconds: 1000),
-              curve: Curves.easeIn,
-            );
-          }
-          if (agCourseLessonList?.agCourses?.nodes?.isNotEmpty ?? false) {
-            agCourseLessonList?.agCourses?.nodes?.forEach(
-              (element) {
-                if (element.completed.toString() == "false") {
-                  // notCompleteLesson?.add(element);
-                  notCompletedLesson = notCompletedLesson + 1;
-                }
-              },
-            );
-            debugPrint("message?>>>>>>>> $notCompletedLesson");
-          }
-        }
-      },
-      builder: (context, state) {
-        return PopScope(
-          canPop: true,
-          onPopInvoked: (didPop) {
-            // context.read<VideoBloc>().add(StopVideo());
-            _controller?.pause();
-            if (_chewieController != null) {
-              _chewieController?.pause();
+        listener: (context, state) {
+          if (state is ShowCourseDetailLoadingState) {
+            if (!AGLoader.isShown) {
+              AGLoader.show(context);
             }
-          },
-          child: Scaffold(
-            backgroundColor: AppColors.bgLightWhitColor,
-            bottomNavigationBar: SafeArea(
-              bottom: true,
-              child: Padding(
-                padding: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 20.h),
-                child: isCoursePurchased
-                    ? customButton(
-                        onTap: ((agCourseLessonList?.agCourses?.nodes ?? [])
-                                    .isNotEmpty &&
-                                currentSelectedLesson != null)
-                            ? () {
-                                // context.read<VideoBloc>().add(PauseVideo());
-                                _controller?.pause();
-                                if (_chewieController != null) {
-                                  _chewieController?.pause();
-                                }
-                                List<Lesson>? lessonList =
-                                    agCourseLessonList?.agCourses?.nodes ?? [];
-                                if (lessonList.isNotEmpty &&
-                                    currentSelectedLesson != null) {
-                                  Lesson? lesson = currentSelectedLesson;
-                                  Get.toNamed(
-                                    Routes.lessonDetailPage,
-                                    arguments: [
-                                      courseData,
-                                      lesson?.completed ?? false,
-                                      notCompletedLesson
-                                    ],
-                                    parameters: {
-                                      "id": lesson?.id ?? '',
-                                    },
-                                  );
-                                }
-                              }
-                            : notCompletedLesson == 0 &&
-                                    (agCourseLessonList?.agCourses?.nodes ?? [])
-                                        .isNotEmpty
-                                ? () {
-                                    Get.toNamed(Routes.courseCompleteSuccessPage);
+          } else if (state is HideCourseDetailLoadingState) {
+            if (AGLoader.isShown) {
+              AGLoader.hide();
+            }
+          } else if (state is GetCourseDetailState) {
+            courseData = state.agCourseDetail;
+            databaseId = courseData?.databaseId;
+
+            // studentCompletedLessons =
+            //     courseData?.courseTypeImage?.completedLessons?.nodes ?? [];
+            bloc.add(GetCourseAmountEvent(courseId: courseId));
+            bloc.add(GetCourseLessonsEvent(courseId: courseId));
+            _controller = VideoPlayerController.networkUrl(
+              Uri.parse(courseData?.courseTypeImage?.videoUrl ?? ''),
+            )
+              ..addListener(() {})
+              ..initialize().then((value) {
+                setState(() {
+                  _chewieController = ChewieController(
+                    videoPlayerController: _controller!,
+                    autoPlay: false,
+                    looping: false,
+                    allowFullScreen: false,
+                    draggableProgressBar: false,
+                    allowMuting: false,
+                    allowPlaybackSpeedChanging: false,
+                    // additionalOptions: (context) {
+                    //   return <OptionItem>[];
+                    // },
+                    // optionsBuilder: (context, chewieOptions) {},
+                    // customControls: _buildOverlay(),
+                  );
+                });
+              });
+          } else if (state is GetCourseAmountState) {
+            courseAmountResponseModel = state.courseAmountResponseModel;
+          } else if (state is UpdateCompletedLessonState) {
+            Lesson? lesson = agCourseLessonList?.agCourses?.nodes
+                ?.firstWhereOrNull((element) => element.id == state.lessonId);
+            if (lesson != null) {
+              lesson.completed = true;
+            }
+            // studentCompletedLessons?.add(LessonNodes(id: state.lessonId));
+            // context.read<MyCourseBloc>().add(
+            //       UpdateMyCourseCompletedEvent(
+            //         courseId: courseId,
+            //         lessonId: state.lessonId,
+            //       ),
+            //     );
+            updateCurrentSelectedLesson();
+          } else if (state is GetCourseLessonsState) {
+            agCourseLessonList = state.agCourseLessonList;
+            if (isCoursePurchased) {
+              updateCurrentSelectedLesson();
+              _scrollController.animateTo(
+                MediaQuery.of(context).size.height / 1.7,
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.easeIn,
+              );
+            }
+            if (agCourseLessonList?.agCourses?.nodes?.isNotEmpty ?? false) {
+              agCourseLessonList?.agCourses?.nodes?.forEach(
+                (element) {
+                  if (element.completed.toString() == "false") {
+                    // notCompleteLesson?.add(element);
+                    notCompletedLesson = notCompletedLesson + 1;
+                  }
+                },
+              );
+              debugPrint("message?>>>>>>>> $notCompletedLesson");
+            }
+          }
+        },
+        builder: (context, state) {
+          return PopScope(
+            canPop: true,
+            onPopInvoked: (didPop) {
+              // context.read<VideoBloc>().add(StopVideo());
+              _controller?.pause();
+              if (_chewieController != null) {
+                _chewieController?.pause();
+              }
+            },
+            child: Scaffold(
+              backgroundColor: AppColors.bgLightWhitColor,
+              bottomNavigationBar: SafeArea(
+                bottom: true,
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: 20.w, right: 20.w, bottom: 20.h),
+                  child: isCoursePurchased
+                      ? customButton(
+                          onTap: ((agCourseLessonList?.agCourses?.nodes ?? [])
+                                      .isNotEmpty &&
+                                  currentSelectedLesson != null)
+                              ? () {
+                                  // context.read<VideoBloc>().add(PauseVideo());
+                                  _controller?.pause();
+                                  if (_chewieController != null) {
+                                    _chewieController?.pause();
                                   }
-                                : null,
-                        boxColor: AppColors.alertButtonColor,
-                        child: Text(
-                          notCompletedLesson == 0 && isCoursePurchased
-                              ? "Certificate"
-                              : 'Start Lesson',
-                          textAlign: TextAlign.center,
-                          style: AppFontStyle.dmSansBold.copyWith(
-                            color: AppColors.white,
-                            fontSize: 17.sp,
+                                  List<Lesson>? lessonList =
+                                      agCourseLessonList?.agCourses?.nodes ??
+                                          [];
+                                  if (lessonList.isNotEmpty &&
+                                      currentSelectedLesson != null) {
+                                    Lesson? lesson = currentSelectedLesson;
+                                    Get.toNamed(
+                                      Routes.lessonDetailPage,
+                                      arguments: [
+                                        courseData,
+                                        lesson?.completed ?? false,
+                                        notCompletedLesson
+                                      ],
+                                      parameters: {
+                                        "id": lesson?.id ?? '',
+                                      },
+                                    );
+                                  }
+                                }
+                              : notCompletedLesson == 0 &&
+                                      (agCourseLessonList?.agCourses?.nodes ??
+                                              [])
+                                          .isNotEmpty
+                                  ? () {
+                                      Get.toNamed(
+                                          Routes.courseCompleteSuccessPage);
+                                    }
+                                  : null,
+                          boxColor: AppColors.headerColor,
+                          child: Text(
+                            notCompletedLesson == 0 && isCoursePurchased
+                                ? "Certificate"
+                                : 'Start Lesson',
+                            textAlign: TextAlign.center,
+                            style: AppFontStyle.dmSansBold.copyWith(
+                              color: AppColors.white,
+                              fontSize: 17.sp,
+                            ),
                           ),
-                        ),
-                      )
-                    : null,
+                        )
+                      : null,
+                ),
+              ),
+              body: Column(
+                children: [
+                  SecondaryAgHeaderBar(
+                    pageTitle: courseData?.name ?? '',
+                    showBackButton: true,
+                    showHomeButton: true,
+                    showMenuButton: false,
+                    backgroundColor: AppColors.headerColor,
+                    onBackPressed: () {
+                      if (_controller != null) {
+                        _controller?.dispose();
+                      }
+                      if (_chewieController != null) {
+                        _chewieController?.dispose();
+                      }
+                      Get.back();
+                    },
+                  ),
+                  courseData == null
+                      ? Container()
+                      : Expanded(child: bodyView()),
+                ],
               ),
             ),
-            body: Stack(
-              children: [
-                customTopContainer(
-                  bgImage: AssetImages.icBgCourseDetail,
-                  height: 280.h,
-                  radius: 18.r,
-                ),
-                Column(
-                  children: [
-                    _headerView(),
-                    courseData == null
-                        ? Container()
-                        : Expanded(child: bodyView()),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ),
+          );
+        },
+      ),
     );
   }
 
@@ -397,404 +406,399 @@ class _CourseDetailPageState extends State<CourseDetailPage>
   }
 
   Widget bodyView() {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: 32.w,
-        // vertical: 20.h,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
+      child: Stack(
         children: [
-          Row(
-            children: [
-              AskLiveTeacherDialog(
-                widget: courseDetailHelp(),
-                isSupportView: false,
-                onClick: () {
-                  // context.read<VideoBloc>().add(PauseVideo());
-                  _controller?.pause();
-                  if (_chewieController != null) {
-                    _chewieController?.pause();
-                  }
-                },
-              ),
-              const Spacer(),
-            ],
+          customTopContainer(
+            bgImage: '',
+            backgroundColor: AppColors.headerColor,
+            height: 200.h,
+            radius: 30.r,
           ),
-          InkWell(
-            splashColor: Colors.transparent,
-            focusColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-            onTap: () {},
-            child: Container(
-              width: Get.width,
-              height: 230.h,
-              margin: EdgeInsets.symmetric(vertical: 20.h),
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                color: AppColors.black.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              child: (courseData?.courseTypeImage?.coursePreview != null) &&
-                      (courseData?.courseTypeImage?.coursePreview?.node
-                              ?.mediaItemUrl?.isNotEmpty ??
-                          false) &&
-                      _chewieController != null &&
-                      _chewieController!
-                          .videoPlayerController.value.isInitialized
-                  ? Container(
-                      color: AppColors.black,
-                      width: Get.width,
-                      height: 190.h,
-                      child: Chewie(controller: _chewieController!),
-                    )
-                  // AGVideoWidget(
-                  //         url: courseData?.courseTypeImage?.coursePreview?.node
-                  //                 ?.mediaItemUrl ??
-                  //             '',
-                  //         index: 0,
-                  //       )
-                  : Stack(
-                      children: [
-                        AGImageView(
-                          courseData?.courseTypeImage?.courseCategoryImage?.node
-                                  ?.mediaItemUrl ??
-                              '',
-                          fit: BoxFit.cover,
-                          width: Get.width,
-                          height: 230.h,
-                        ),
-                        Positioned(
-                          bottom: 18,
-                          left: 18,
-                          right: 18,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 32.w,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AskLiveTeacherDialog(
+                      widget: courseDetailHelp(),
+                      isSupportView: false,
+                      onClick: () {
+                        // context.read<VideoBloc>().add(PauseVideo());
+                        _controller?.pause();
+                        if (_chewieController != null) {
+                          _chewieController?.pause();
+                        }
+                      },
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+                InkWell(
+                  splashColor: Colors.transparent,
+                  focusColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  onTap: () {},
+                  child: Container(
+                    width: Get.width,
+                    height: 230.h,
+                    margin: EdgeInsets.only(top: 8.h, bottom: 10.h),
+                    clipBehavior: Clip.hardEdge,
+                    decoration: BoxDecoration(
+                      color: AppColors.black.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    child: (courseData?.courseTypeImage?.coursePreview !=
+                                null) &&
+                            (courseData?.courseTypeImage?.coursePreview?.node
+                                    ?.mediaItemUrl?.isNotEmpty ??
+                                false) &&
+                            _chewieController != null &&
+                            _chewieController!
+                                .videoPlayerController.value.isInitialized
+                        ? Container(
+                            color: AppColors.black,
+                            width: Get.width,
+                            height: 190.h,
+                            child: Chewie(controller: _chewieController!),
+                          )
+                        : Stack(
                             children: [
-                              SvgPicture.asset(
-                                AssetImages.icPlay,
-                                height: 40.h,
-                                width: 40.w,
+                              AGImageView(
+                                courseData?.courseTypeImage?.courseCategoryImage
+                                        ?.node?.mediaItemUrl ??
+                                    '',
+                                fit: BoxFit.cover,
+                                width: Get.width,
+                                height: 230.h,
                               ),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 25.w,
-                                ),
-                                height: 30.h,
-                                alignment: Alignment.center,
-                                clipBehavior: Clip.hardEdge,
-                                decoration: BoxDecoration(
-                                  color: AppColors.black.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(21),
-                                ),
-                                child: Text(
-                                  'Preview course',
-                                  style: AppFontStyle.dmSansRegular.copyWith(
-                                    color: AppColors.white,
-                                  ),
+                              Positioned(
+                                bottom: 18,
+                                left: 18,
+                                right: 18,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SvgPicture.asset(
+                                      AssetImages.icPlay,
+                                      height: 40.h,
+                                      width: 40.w,
+                                    ),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 25.w,
+                                      ),
+                                      height: 30.h,
+                                      alignment: Alignment.center,
+                                      clipBehavior: Clip.hardEdge,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            AppColors.black.withOpacity(0.25),
+                                        borderRadius: BorderRadius.circular(21),
+                                      ),
+                                      child: Text(
+                                        'Preview course',
+                                        style:
+                                            AppFontStyle.dmSansRegular.copyWith(
+                                          color: AppColors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
+                  ),
+                ),
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: AGBannerAd(adSize: AdSize.mediumRectangle),
+                  ),
+                ),
+                Text(
+                  courseData?.name ?? "",
+                  style: AppFontStyle.dmSansBold.copyWith(
+                    color: AppColors.cardTextColor,
+                    fontSize: 25.sp,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: _customRowWithIcon(
+                          icon: AssetImages.icStar,
+                          title: "-",
+                          subTitle: ' (- ratings)',
                         ),
-                      ],
+                      ),
+                      SizedBox(width: 15.w),
+                      Expanded(
+                        child: _customRowWithIcon(
+                          icon: AssetImages.icStudent,
+                          title: "-",
+                          subTitle: ' (- students)',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isCoursePurchased) ...[
+                  Container(
+                    height: 6.h,
+                    margin: EdgeInsets.only(bottom: 8.h, top: 5.h),
+                    clipBehavior: Clip.hardEdge,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(30.r),
+                      ),
                     ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: AGBannerAd(adSize: AdSize.mediumRectangle),
+                    child: LinearProgressIndicator(
+                      value: (studentProgress / 100),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.progressBarActiveColor,
+                      ),
+                      backgroundColor: AppColors.progressBarColor,
                     ),
                   ),
                   Text(
-                    courseData?.name ?? "",
-                    style: AppFontStyle.dmSansBold.copyWith(
-                      color: AppColors.cardTextColor,
-                      fontSize: 25.sp,
+                    '$studentProgress% Completed',
+                    style: AppFontStyle.dmSansRegular.copyWith(
+                      color: AppColors.lightGrey,
+                      fontSize: 15.sp,
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: _customRowWithIcon(
-                            icon: AssetImages.icStar,
-                            title: "-",
-                            subTitle: ' (- ratings)',
+                  SizedBox(height: (isCoursePurchased) ? 15.h : 0),
+                ],
+                ReadMoreText(
+                  courseData?.description ?? '',
+                  trimLines: 3,
+                  colorClickableText: Colors.transparent,
+                  trimMode: TrimMode.Line,
+                  trimCollapsedText: 'Read more  ',
+                  trimExpandedText: ' Show less',
+                  style: AppFontStyle.dmSansMedium.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.alertButtonBlackColor,
+                  ),
+                  moreStyle: AppFontStyle.dmSansMedium.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightBlue,
+                  ),
+                  lessStyle: AppFontStyle.dmSansMedium.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightBlue,
+                  ),
+                ),
+                _customContainer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'This Course Includes',
+                        textAlign: TextAlign.center,
+                        style: AppFontStyle.dmSansBold.copyWith(
+                          fontSize: 18.sp,
+                          color: AppColors.cardTextColor,
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 10.h,
+                        ),
+                        child: _customCardRow(
+                          icon: AssetImages.icClock,
+                          value:
+                              '${courseData?.courseTypeImage?.courseHours} hours on demand video',
+                        ),
+                      ),
+                      _customCardRow(
+                        icon: AssetImages.icMobile,
+                        value: 'Access on Mobile, Tab, PC and laptop ',
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          vertical: 10.h,
+                        ),
+                        child: _customCardRow(
+                          icon: AssetImages.icCertificate,
+                          value: 'Certificate of completion',
+                        ),
+                      ),
+                      _customCardRow(
+                        icon: AssetImages.icWorkshop,
+                        value: 'Workshops under each project',
+                      ),
+                      if ((courseAmountResponseModel != null) &&
+                          !isCoursePurchased) ...[
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 15.h,
+                          ),
+                          child: Divider(
+                            height: 0,
+                            color: AppColors.questionDividerColor,
                           ),
                         ),
-                        SizedBox(width: 15.w),
-                        Expanded(
-                          child: _customRowWithIcon(
-                            icon: AssetImages.icStudent,
-                            title: "-",
-                            subTitle: ' (- students)',
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              isMonthlyCourse ? '999' : '999',
+                              style: AppFontStyle.poppinsBold.copyWith(
+                                fontSize: 22.sp,
+                                color: AppColors.cardTextColor,
+                              ),
+                            ),
+                            SizedBox(width: 5.w),
+                            Text(
+                              isMonthlyCourse ? '' : '2499',
+                              style: AppFontStyle.poppinsRegular.copyWith(
+                                fontSize: 22.sp,
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.priceColor,
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              isMonthlyCourse ? 'Monthly' : 'For 6 Months',
+                              style: AppFontStyle.poppinsRegular.copyWith(
+                                fontSize: 12.sp,
+                                color: AppColors.cardTextColor,
+                              ),
+                            ),
+                            SizedBox(width: 5.w),
+                            Text(
+                              isMonthlyCourse ? '' : 'Monthly',
+                              style: AppFontStyle.poppinsRegular.copyWith(
+                                fontSize: 12.sp,
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.priceColor,
+                              ),
+                            ),
+                          ],
                         ),
+                        SizedBox(height: 20.h),
                       ],
-                    ),
-                  ),
-                  if (isCoursePurchased) ...[
-                    Container(
-                      height: 6.h,
-                      margin: EdgeInsets.only(bottom: 8.h, top: 5.h),
-                      clipBehavior: Clip.hardEdge,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(30.r),
-                        ),
-                      ),
-                      child: LinearProgressIndicator(
-                        value: (studentProgress / 100),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.progressBarActiveColor,
-                        ),
-                        backgroundColor: AppColors.progressBarColor,
-                      ),
-                    ),
-                    Text(
-                      '$studentProgress% Completed',
-                      style: AppFontStyle.dmSansRegular.copyWith(
-                        color: AppColors.lightGrey,
-                        fontSize: 15.sp,
-                      ),
-                    ),
-                    SizedBox(height: (isCoursePurchased) ? 15.h : 0),
-                  ],
-                  ReadMoreText(
-                    courseData?.description ?? '',
-                    trimLines: 3,
-                    colorClickableText: Colors.transparent,
-                    trimMode: TrimMode.Line,
-                    trimCollapsedText: 'Read more  ',
-                    trimExpandedText: ' Show less',
-                    style: AppFontStyle.dmSansMedium.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.alertButtonBlackColor,
-                    ),
-                    moreStyle: AppFontStyle.dmSansMedium.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.lightBlue,
-                    ),
-                    lessStyle: AppFontStyle.dmSansMedium.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.lightBlue,
-                    ),
-                  ),
-                  _customContainer(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'This Course Includes',
-                          textAlign: TextAlign.center,
-                          style: AppFontStyle.dmSansBold.copyWith(
-                            fontSize: 18.sp,
-                            color: AppColors.cardTextColor,
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10.h,
-                          ),
-                          child: _customCardRow(
-                            icon: AssetImages.icClock,
-                            value:
-                                '${courseData?.courseTypeImage?.courseHours} hours on demand video',
-                          ),
-                        ),
-                        _customCardRow(
-                          icon: AssetImages.icMobile,
-                          value: 'Access on Mobile, Tab, PC and laptop ',
-                        ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10.h,
-                          ),
-                          child: _customCardRow(
-                            icon: AssetImages.icCertificate,
-                            value: 'Certificate of completion',
-                          ),
-                        ),
-                        _customCardRow(
-                          icon: AssetImages.icWorkshop,
-                          value: 'Workshops under each project',
-                        ),
-                        if ((courseAmountResponseModel != null) &&
-                            !isCoursePurchased) ...[
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 15.h,
-                            ),
-                            child: Divider(
-                              height: 0,
-                              color: AppColors.questionDividerColor,
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                isMonthlyCourse ? '999' : '999',
-                                style: AppFontStyle.poppinsBold.copyWith(
-                                  fontSize: 22.sp,
-                                  color: AppColors.cardTextColor,
-                                ),
-                              ),
-                              SizedBox(width: 5.w),
-                              Text(
-                                isMonthlyCourse ? '' : '2499',
-                                style: AppFontStyle.poppinsRegular.copyWith(
-                                  fontSize: 22.sp,
-                                  decoration: TextDecoration.lineThrough,
-                                  color: AppColors.priceColor,
-                                ),
-                              ),
-                              SizedBox(width: 10.w),
-                              Text(
-                                isMonthlyCourse ? 'Monthly' : 'For 6 Months',
-                                style: AppFontStyle.poppinsRegular.copyWith(
-                                  fontSize: 12.sp,
-                                  color: AppColors.cardTextColor,
-                                ),
-                              ),
-                              SizedBox(width: 5.w),
-                              Text(
-                                isMonthlyCourse ? '' : 'Monthly',
-                                style: AppFontStyle.poppinsRegular.copyWith(
-                                  fontSize: 12.sp,
-                                  decoration: TextDecoration.lineThrough,
-                                  color: AppColors.priceColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 20.h),
-                        ],
-                        Visibility(
-                          visible: !isCoursePurchased,
-                          child: customButton(
-                            onTap: () {
-                              /// 🔹 CHECK LOGIN
-                              final isUserLoggedIn = user != null;
+                      Visibility(
+                        visible: !isCoursePurchased,
+                        child: customButton(
+                          onTap: () {
+                            /// 🔹 CHECK LOGIN
+                            final isUserLoggedIn = user != null;
 
-                              if (!isUserLoggedIn) {
-                                Get.toNamed(Routes.login);
-                                StorageManager.instance.setBool(
-                                    LocalStorageKeys.prefGuestLogin, false);
-                                StorageManager.instance.clear();
-                                return;
-                              }
+                            if (!isUserLoggedIn) {
+                              Get.toNamed(Routes.login);
+                              StorageManager.instance.setBool(
+                                  LocalStorageKeys.prefGuestLogin, false);
+                              StorageManager.instance.clear();
+                              return;
+                            }
 
-                              if (Platform.isIOS) {
-                                Get.toNamed(
-                                  Routes.planPage,
-                                  arguments: [courseId, false],
-                                );
+                            if (Platform.isIOS) {
+                              Get.toNamed(
+                                Routes.planPage,
+                                arguments: [courseId, false],
+                              );
+                            } else {
+                              String url;
+
+                              if (isMonthlyCourse) {
+                                url =
+                                    '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView&ag_course_dropdown=$databaseId&student_id=${user?.databaseId}';
                               } else {
-                                String url;
-
-                                if (isMonthlyCourse) {
-                                  url =
-                                  '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView&ag_course_dropdown=$databaseId&student_id=${user?.databaseId}';
-                                } else {
-                                  url =
-                                  '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$databaseId&student_id=${user?.databaseId.toString()}&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
-                                }
-                                debugPrint('url===> $url');
-                                debugPrint('url===> $url');
-                                launchUrlInExternalBrowser(url);
+                                url =
+                                    '${baseUrl}checkout/?add-to-cart=475&ag_course_dropdown=$databaseId&student_id=${user?.databaseId.toString()}&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView';
                               }
-                            },
-                            boxColor: AppColors.alertButtonColor,
-                            child: Text(
-                              ("Get Started").toUpperCase(),
-                              textAlign: TextAlign.center,
-                              style: AppFontStyle.dmSansBold.copyWith(
-                                color: AppColors.white,
-                                fontSize: 17.sp,
-                              ),
+                              debugPrint('url===> $url');
+                              debugPrint('url===> $url');
+                              launchUrlInExternalBrowser(url);
+                            }
+                          },
+                          boxColor: AppColors.alertButtonColor,
+                          child: Text(
+                            ("Get Started").toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: AppFontStyle.dmSansBold.copyWith(
+                              color: AppColors.white,
+                              fontSize: 17.sp,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  AGBannerAd(adSize: AdSize.mediumRectangle),
-                  _customContainer(
-                    padding: EdgeInsets.zero,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: 110.h,
-                          width: Get.width,
-                          clipBehavior: Clip.hardEdge,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: Image.asset(
-                                AssetImages.icBgCourseContent,
-                              ).image,
-                            ),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: 23.h,
-                            horizontal: 28.w,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Course Content',
-                                style: AppFontStyle.dmSansBold.copyWith(
-                                  fontSize: 21.sp,
-                                  color: AppColors.white,
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              Row(
-                                children: [
-                                  _contentText(
-                                    value: '${courseData?.count ?? 0} Lessons',
-                                  ),
-                                  SizedBox(
-                                    height: 18.h,
-                                    child: VerticalDivider(
-                                      color: AppColors.greyColor9595,
-                                      width: 20.w,
-                                    ),
-                                  ),
-                                  _contentText(
-                                    value:
-                                        '${courseData?.courseTypeImage?.courseHours ?? "0"} hours',
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                ),
+                AGBannerAd(adSize: AdSize.mediumRectangle),
+                _customContainer(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 110.h,
+                        width: Get.width,
+                        clipBehavior: Clip.hardEdge,
+                        decoration: BoxDecoration(
+                          color: AppColors.tabBarColor,
                         ),
-                        courseContentView(),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 23.h,
+                          horizontal: 28.w,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Course Content',
+                              style: AppFontStyle.dmSansBold.copyWith(
+                                fontSize: 21.sp,
+                                color: AppColors.white,
+                              ),
+                            ),
+                            SizedBox(height: 5.h),
+                            Row(
+                              children: [
+                                _contentText(
+                                  value: '${courseData?.count ?? 0} Lessons',
+                                ),
+                                SizedBox(
+                                  height: 18.h,
+                                  child: VerticalDivider(
+                                    color: AppColors.greyColor9595,
+                                    width: 20.w,
+                                  ),
+                                ),
+                                _contentText(
+                                  value:
+                                      '${courseData?.courseTypeImage?.courseHours ?? "0"} hours',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      courseContentView(),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 
@@ -939,53 +943,6 @@ class _CourseDetailPageState extends State<CourseDetailPage>
           ],
         );
       },
-    );
-  }
-
-  Widget _headerView() {
-    return customAppBar(
-      showPrefixIcon: true,
-      showTitle: true,
-      title: courseData?.name,
-      onClick: () {
-        // context.read<VideoBloc>().add(StopVideo());
-        if (_controller != null) {
-          _controller?.dispose();
-        }
-        if (_chewieController != null) {
-          _chewieController?.dispose();
-        }
-        Get.back();
-      },
-      suffixIcons: [
-        customIcon(
-          onClick: () {
-            // context.read<VideoBloc>().add(PauseVideo());
-            _controller?.pause();
-            if (_chewieController != null) {
-              _chewieController?.pause();
-            }
-            Get.toNamed(Routes.menuPage);
-          },
-          icon: AssetImages.icMenu,
-          iconColor: AppColors.white,
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 20.w),
-          child: customIcon(
-            onClick: () {
-              // context.read<VideoBloc>().add(PauseVideo());
-              _controller?.pause();
-              if (_chewieController != null) {
-                _chewieController?.pause();
-              }
-              Get.toNamed(Routes.notificationPage);
-            },
-            icon: AssetImages.icNotification,
-            iconColor: AppColors.white,
-          ),
-        ),
-      ],
     );
   }
 

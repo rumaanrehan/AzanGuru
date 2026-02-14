@@ -13,17 +13,15 @@ import 'package:azan_guru_mobile/ui/model/user.dart';
 import 'package:azan_guru_mobile/ui/auth/otp_auth_service.dart';
 import 'package:azan_guru_mobile/service/digits_service.dart';
 
-
 part 'login_event.dart';
 part 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
   final GraphQLService graphQLService = GraphQLService();
   final OtpAuthService otpAuthService =
-  OtpAuthService(DigitsService(), GraphQLService());
+      OtpAuthService(DigitsService(), GraphQLService());
 
   LoginBloc() : super(LoginInitialState()) {
-
     on<UserLoginEvent>((event, emit) async {
       try {
         graphQLService.initClient();
@@ -33,7 +31,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
         );
 
         if (result.hasException || result.data == null) {
-           throw Exception(result.exception?.graphqlErrors.firstOrNull?.message ?? 'Login failed');
+          throw Exception(
+              result.exception?.graphqlErrors.firstOrNull?.message ??
+                  'Login failed');
         }
 
         if (result.data!['login'] == null) {
@@ -43,7 +43,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
         final userData = UserData.fromJson(result.data!['login']);
 
         if (userData.authToken == null) {
-           throw Exception('Auth token is missing');
+          throw Exception('Auth token is missing');
         }
 
         final userId = userData.databaseId ?? '';
@@ -52,7 +52,6 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
           jwt: userData.authToken!,
           userId: userId.toString(),
         ));
-
       } catch (e) {
         emit(LoginErrorState(errorMessage: e.toString()));
       }
@@ -71,8 +70,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
     on<LoginWithOtpEvent>((event, emit) async {
       emit(LoginLoadingState());
       try {
-        final (jwt, userId) =
-        await otpAuthService.oneClickLoginOrRegister(
+        final (jwt, userId) = await otpAuthService.oneClickLoginOrRegister(
           mobile: event.mobile,
           otp: event.otp,
         );
@@ -128,14 +126,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
           LocalStorageKeys.prefGuestLogin,
         );
 
-        // --- DEBUG LOGGING --- 
+        // --- DEBUG LOGGING ---
         print('🔥 Checking subscriptions for userId: ${event.userId}');
         int parsedUserId;
         try {
           parsedUserId = int.parse(event.userId);
-        } catch(_) {
-           print('🚨 Invalid userId format: ${event.userId}');
-           parsedUserId = 0;
+        } catch (_) {
+          print('🚨 Invalid userId format: ${event.userId}');
+          parsedUserId = 0;
         }
 
         final subsResult = await graphQLService.performQuery(
@@ -153,24 +151,28 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> with ValidationMixin {
         bool isSubbed = false;
         bool isPurchased = false;
 
-        if (subsResult.data != null && subsResult.data!['getSubscriptions'] != null) {
-            final orders = subsResult.data!['getSubscriptions']?['orders'] as List<dynamic>? ?? [];
-            for (final item in orders) {
-              final key = item['key']?.toString().toLowerCase();
-              final value = item['value']?.toString().toLowerCase();
-              
-              print('🔍 Checking Order Item: $key = $value');
+        if (subsResult.data != null &&
+            subsResult.data!['getSubscriptions'] != null) {
+          final orders = subsResult.data!['getSubscriptions']?['orders']
+                  as List<dynamic>? ??
+              [];
+          for (final item in orders) {
+            final key = item['key']?.toString().toLowerCase();
+            final value = item['value']?.toString().toLowerCase();
 
-              if (key == 'subscription' && value == 'active') {
-                isSubbed = true;
-              }
-              if (key == 'status' && value == 'completed') {
-                isPurchased = true;
-              }
+            print('🔍 Checking Order Item: $key = $value');
+
+            if (key == 'subscription' && value == 'active') {
+              isSubbed = true;
             }
+            if (key == 'status' && value == 'completed') {
+              isPurchased = true;
+            }
+          }
         }
-        
-        print('🔥 Final Purchase Status -> isSubbed: $isSubbed, isPurchased: $isPurchased');
+
+        print(
+            '🔥 Final Purchase Status -> isSubbed: $isSubbed, isPurchased: $isPurchased');
 
         await StorageManager.instance.setBool(
           LocalStorageKeys.isUserHasSubscription,

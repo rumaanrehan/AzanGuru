@@ -77,4 +77,3 @@ class Notifications {
     return data;
   }
 }
-

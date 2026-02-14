@@ -5,7 +5,7 @@ import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
-import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -71,13 +71,14 @@ class _ProfilePageState extends State<ProfilePage> {
   void _populateUserProfile() {
     try {
       if (!isUserLoggedIn) return;
-      
-      nameCtrl.text = user?.firstName?.isEmpty ?? true ? "" : "${user?.firstName}";
+
+      nameCtrl.text =
+          user?.firstName?.isEmpty ?? true ? "" : "${user?.firstName}";
       emailCtrl.text = user?.email ?? "";
       phoneCtrl.text = user?.generalUserOptions?.phoneNumber?.toString() ?? '';
       langCtrl.text = user?.locale == "en_US" ? "English" : "Arabic";
       selectedGender = user?.gender ?? "";
-      
+
       if (mounted) {
         setState(() {});
       }
@@ -145,7 +146,8 @@ class _ProfilePageState extends State<ProfilePage> {
     if (AGLoader.isShown) {
       AGLoader.hide();
     }
-    Fluttertoast.showToast(msg: 'Password reset email sent to your registered email');
+    Fluttertoast.showToast(
+        msg: 'Password reset email sent to your registered email');
     debugPrint('Password reset email sent');
   }
 
@@ -173,7 +175,8 @@ class _ProfilePageState extends State<ProfilePage> {
           } else {
             // Fallback: hide loader if it's shown for any unhandled state
             if (AGLoader.isShown) {
-              debugPrint('Unhandled state: ${state.runtimeType} - hiding loader');
+              debugPrint(
+                  'Unhandled state: ${state.runtimeType} - hiding loader');
               AGLoader.hide();
             }
           }
@@ -192,8 +195,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-            AgHeaderBar(
-              onMenuTap: () => Get.toNamed(Routes.menuPage),
+            SecondaryAgHeaderBar(
+              pageTitle: 'Profile',
             ),
           ],
         ),
@@ -493,7 +496,8 @@ class _ProfilePageState extends State<ProfilePage> {
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.r),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           ),
         ),
       ],

@@ -35,7 +35,6 @@ class _MyCoursePageState extends State<MyCoursePage> {
 
   bool get isUserLoggedIn => user != null;
 
-
   MyCourseBloc get bloc => context.read<MyCourseBloc>();
 
   @override
@@ -137,10 +136,9 @@ class _MyCoursePageState extends State<MyCoursePage> {
                                                 return CourseTile(
                                                   isMyCourse: true,
                                                   mdlCourse: data,
-                                                  studentProgress:
-                                                      mdlCourseData
-                                                              ?.studentProgress ??
-                                                          0,
+                                                  studentProgress: mdlCourseData
+                                                          ?.studentProgress ??
+                                                      0,
                                                   onTap: () async {
                                                     if (!AGLoader.isShown) {
                                                       AGLoader.show(context);
@@ -202,9 +200,14 @@ class _MyCoursePageState extends State<MyCoursePage> {
                   ],
                 ),
               ),
-              // Header bar (shared)
-              AgHeaderBar(
-                onMenuTap: () => Get.toNamed(Routes.menuPage),
+              // Header bar (shared) - pinned to top of screen
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: AgHeaderBar(
+                  onMenuTap: () => Get.toNamed(Routes.menuPage),
+                ),
               ),
             ],
           ),

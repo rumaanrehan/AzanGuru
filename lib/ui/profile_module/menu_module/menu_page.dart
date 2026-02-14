@@ -15,6 +15,7 @@ import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
+
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
 
@@ -56,10 +57,11 @@ class _MenuPageState extends State<MenuPage> {
             onMenuTap: () {},
           ),
           Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Padding(
-                  padding: EdgeInsets.only(left: 25.w, right: 25.w, top: 30.h, bottom: 150.h),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: EdgeInsets.only(
+                    left: 25.w, right: 25.w, top: 30.h, bottom: 150.h),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -159,7 +161,8 @@ class _MenuPageState extends State<MenuPage> {
                         icon: Icons.delete_outline,
                         label: 'Delete Account',
                         subtitle: 'Permanently remove your account',
-                        onTap: () => Get.toNamed(Routes.deleteAccountDetailPage),
+                        onTap: () =>
+                            Get.toNamed(Routes.deleteAccountDetailPage),
                         color: AppColors.red,
                       ),
                       _menuButton(

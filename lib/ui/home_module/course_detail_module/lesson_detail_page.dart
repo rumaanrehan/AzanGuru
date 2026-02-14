@@ -6,6 +6,7 @@ import 'package:azan_guru_mobile/constant/enum.dart';
 import 'package:azan_guru_mobile/ui/app.dart';
 import 'package:azan_guru_mobile/ui/common/ag_image_view.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/help_module/ask_live_teacher_dialog.dart';
 import 'package:azan_guru_mobile/ui/model/ag_course_detail.dart';
 import 'package:azan_guru_mobile/ui/model/ag_lesson_detail.dart';
@@ -210,7 +211,18 @@ class _LessonDetailPageState extends State<LessonDetailPage>
             backgroundColor: AppColors.bgLightWhitColor,
             body: Column(
               children: [
-                _headerView(),
+                SecondaryAgHeaderBar(
+                  pageTitle: agCourseDetail?.name ?? '',
+                  showBackButton: true,
+                  showHomeButton: true,
+                  showMenuButton: false,
+                  // backgroundColor: AppColors.appBgColor,
+                  onBackPressed: () {
+                    playerBloc.add(OnResetPlayStatesEvent());
+                    controller?.dispose();
+                    Get.back();
+                  },
+                ),
                 controller == null && !(controller?.isInitialised ?? false)
                     ? Container(
                         color: AppColors.black,
@@ -276,6 +288,40 @@ class _LessonDetailPageState extends State<LessonDetailPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 32.w),
+                            child: AskLiveTeacherDialog(
+                              onClick: () {
+                                playerBloc.add(OnResetPlayStatesEvent());
+                                controller?.pause();
+                              },
+                              widget: Container(
+                                height: 40.h,
+                                width: 205.w,
+                                padding: EdgeInsets.symmetric(horizontal: 15.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.buttonColor,
+                                  borderRadius: BorderRadius.circular(50.r),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SvgPicture.asset(AssetImages.icLiveChat),
+                                    SizedBox(width: 5.w),
+                                    Text(
+                                      'Ask to Live Teacher',
+                                      style:
+                                          AppFontStyle.poppinsSemiBold.copyWith(
+                                        color: AppColors.white,
+                                        fontSize: 14.sp,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20.h),
                           _upperColumn(),
                           Center(
                             child: Padding(
@@ -687,82 +733,6 @@ class _LessonDetailPageState extends State<LessonDetailPage>
     } else {
       return Container();
     }
-  }
-
-  Widget _headerView() {
-    return customAppBar(
-      showPrefixIcon: true,
-      showTitle: true,
-      // title: title ?? "",
-      titleWidget: AskLiveTeacherDialog(
-        onClick: () {
-          playerBloc.add(OnResetPlayStatesEvent());
-          controller?.pause();
-        },
-        widget: Container(
-          height: 40.h,
-          padding: EdgeInsets.symmetric(horizontal: 15.w),
-          decoration: BoxDecoration(
-            color: AppColors.buttonColor,
-            borderRadius: BorderRadius.circular(50.r),
-          ),
-          child: Row(
-            children: [
-              SvgPicture.asset(AssetImages.icLiveChat),
-              SizedBox(width: 10.w),
-              Text(
-                'Ask to Live Teacher',
-                style: AppFontStyle.poppinsSemiBold.copyWith(
-                  color: AppColors.white,
-                  fontSize: 14.sp,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      onClick: () {
-        playerBloc.add(OnResetPlayStatesEvent());
-        controller?.dispose();
-        Get.back();
-      },
-      backgroundColor: AppColors.appBgColor,
-      suffixIcons: [
-        Padding(
-          padding: EdgeInsets.only(left: 20.w),
-          child: customIcon(
-            onClick: () {
-              controller?.pause();
-              Get.offAndToNamed(Routes.tabBarPage);
-            },
-            icon: AssetImages.icHome,
-            iconColor: AppColors.white,
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w),
-          child: customIcon(
-            onClick: () {
-              controller?.pause();
-              Get.toNamed(Routes.menuPage);
-            },
-            icon: AssetImages.icMenu,
-            iconColor: AppColors.white,
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 20.w),
-          child: customIcon(
-            onClick: () {
-              controller?.pause();
-              Get.toNamed(Routes.notificationPage);
-            },
-            icon: AssetImages.icNotification,
-            iconColor: AppColors.white,
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _customContainer({

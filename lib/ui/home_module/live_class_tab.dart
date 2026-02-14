@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:azan_guru_mobile/bloc/live_class_bloc/live_class_bloc.dart';
@@ -14,40 +13,21 @@ import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
+import 'package:azan_guru_mobile/ui/common/ag_header_bar.dart';
 
 class LiveClassTab extends StatefulWidget {
   const LiveClassTab({super.key});
 
   @override
   State<LiveClassTab> createState() => _LiveClassTabState();
- }
+}
 
 class _LiveClassTabState extends State<LiveClassTab> {
-    Widget _headerIcon({
-      required BuildContext context,
-      required IconData icon,
-      required VoidCallback onTap,
-    }) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          width: 38.w,
-          height: 38.w,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: AppColors.white, size: 20.sp),
-        ),
-      );
-    }
   LiveClassBloc bloc = LiveClassBloc();
   LiveClassesData? liveClassesData;
 
@@ -85,8 +65,10 @@ class _LiveClassTabState extends State<LiveClassTab> {
         } else if (state is GetSubscriptionStatusState) {
           final orderList = state.order.orders;
 
-          KeyValueModel? subData = orderList?.firstWhereOrNull((e) => e.key == 'subscription');
-          KeyValueModel? orderStatusData = orderList?.firstWhereOrNull((e) => e.key == 'status');
+          KeyValueModel? subData =
+              orderList?.firstWhereOrNull((e) => e.key == 'subscription');
+          KeyValueModel? orderStatusData =
+              orderList?.firstWhereOrNull((e) => e.key == 'status');
 
           if (subData != null) {
             final val = subData.value?.toLowerCase();
@@ -94,16 +76,17 @@ class _LiveClassTabState extends State<LiveClassTab> {
           }
 
           if (orderStatusData != null) {
-            isCoursePurchased = orderStatusData.value?.toLowerCase() == 'completed';
+            isCoursePurchased =
+                orderStatusData.value?.toLowerCase() == 'completed';
           }
         }
       },
       builder: (context, state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Stack(
           children: [
-            _headerView(),
-            Expanded(
+            // Content area with padding for header
+            Padding(
+              padding: EdgeInsets.only(top: 90.h),
               child: SingleChildScrollView(
                 child: liveClassesData == null
                     ? Container()
@@ -113,11 +96,6 @@ class _LiveClassTabState extends State<LiveClassTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            // Html(
-                            //   data: liveClassesData
-                            //           ?.generalOptionsFields?.liveClassInfo ??
-                            //       '',
-                            // ),
                             InkWell(
                               onTap: onJoinClassClick,
                               child: Center(
@@ -134,7 +112,8 @@ class _LiveClassTabState extends State<LiveClassTab> {
                             Center(
                               child: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 24.h),
-                                child: AGBannerAd(adSize: AdSize.mediumRectangle),
+                                child:
+                                    AGBannerAd(adSize: AdSize.mediumRectangle),
                               ),
                             ),
                             SizedBox(height: 70.h),
@@ -142,6 +121,11 @@ class _LiveClassTabState extends State<LiveClassTab> {
                         ),
                       ),
               ),
+            ),
+
+            // Header pinned to top
+            AgHeaderBar(
+              onMenuTap: () => Get.toNamed(Routes.menuPage),
             ),
           ],
         );
@@ -151,11 +135,15 @@ class _LiveClassTabState extends State<LiveClassTab> {
 
   onJoinClassClick() async {
     if (isUserLoggedIn && isUserHasSubscription) {
-      String url = '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
+      String url =
+          '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
       debugPrint('url===> $url');
       launchUrlInExternalBrowser(url);
-    } else if (isUserLoggedIn && isCoursePurchased && DateTime.now().weekday == DateTime.monday) {
-      String url = '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
+    } else if (isUserLoggedIn &&
+        isCoursePurchased &&
+        DateTime.now().weekday == DateTime.monday) {
+      String url =
+          '${baseUrl}student-live-class/${user != null ? '?student_id=${user?.databaseId.toString()}&agUserAuthKey=${user?.generalUserOptions?.agUserAuthKey.toString()}' : ''}';
       launchUrlInExternalBrowser(url);
     } else {
       showAlertDialog();
@@ -210,7 +198,7 @@ class _LiveClassTabState extends State<LiveClassTab> {
                             ? AppColors.alertButtonBlackColor
                             : AppColors.alertButtonColor,
                         buttonText:
-                        isUserLoggedIn ? 'Subscribe & Join Class' : 'Login',
+                            isUserLoggedIn ? 'Subscribe & Join Class' : 'Login',
                         onPressed: () {
                           Navigator.pop(context);
                           if (!isUserLoggedIn) {
@@ -224,7 +212,7 @@ class _LiveClassTabState extends State<LiveClassTab> {
                             } else {
                               String url =
                                   '${baseUrl}checkout/?add-to-cart=28543&variation_id=45891&attribute_pa_subscription-pricing=monthly&ag_wv_token=${Uri.encodeQueryComponent(token)}&utm_source=AppWebView&ag_course_dropdown=10${user != null ? '&student_id=${user?.databaseId}' : ''}';
-                                launchUrlInExternalBrowser(url);
+                              launchUrlInExternalBrowser(url);
                             }
                           }
                         },
@@ -250,7 +238,6 @@ class _LiveClassTabState extends State<LiveClassTab> {
 
     Get.dialog(dialogWidget);
   }
-
 
   Future<void> launchUrlInBrowser(String url) async {
     launchUrlInExternalBrowser(url);
@@ -287,59 +274,6 @@ class _LiveClassTabState extends State<LiveClassTab> {
             color: AppColors.white,
             decoration: TextDecoration.none,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _headerView() {
-    return Container(
-      color: const Color(0xFF4D8974),
-      padding: EdgeInsets.only(
-        left: 20.w,
-        right: 20.w,
-        top: 46.h,
-        bottom: 12.h,
-      ),
-      child: SizedBox(
-        height: 48.h,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Left: AzanGuru logo
-            SizedBox(
-              width: 150.w,
-              height: 100.w,
-              child: Image.asset(
-                'assets/images/ag_header_logo.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-            // Right: Bismillah text and menu button
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "﷽",
-                      style: AppFontStyle.dmSansRegular.copyWith(
-                        fontSize: 22.5.sp,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 16.w),
-                    _headerIcon(
-                      context: context,
-                      icon: Icons.menu_rounded,
-                      onTap: () => Get.toNamed(Routes.menuPage),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

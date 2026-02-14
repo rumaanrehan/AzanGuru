@@ -17,7 +17,6 @@ import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:azan_guru_mobile/route/app_routes.dart';
 
-
 import '../service/local_storage/local_storage_keys.dart';
 
 import 'package:package_info_plus/package_info_plus.dart';
@@ -64,8 +63,6 @@ int _compareVersion(String a, String b) {
   }
   return 0;
 }
-
-
 
 // const String baseUrl = 'https://staging.azanguru.com/';
 const String baseUrl = 'https://azanguru.com/';
@@ -153,12 +150,14 @@ Widget customTopContainer({
   Widget? insideChild,
   double? radius,
   BoxFit? fit,
+  Color? backgroundColor,
 }) {
   return Container(
     height: height,
     width: Get.width,
     clipBehavior: Clip.hardEdge,
     decoration: BoxDecoration(
+      color: backgroundColor,
       borderRadius: BorderRadius.only(
         bottomLeft: Radius.circular(radius ?? 30.r),
         bottomRight: Radius.circular(radius ?? 30.r),
@@ -166,15 +165,16 @@ Widget customTopContainer({
     ),
     child: Stack(
       children: [
-        SizedBox(
-          height: height,
-          width: Get.width,
-          child: Image.asset(
-            bgImage,
-            fit: fit ?? BoxFit.fill,
+        if (bgImage.isNotEmpty)
+          SizedBox(
+            height: height,
             width: Get.width,
+            child: Image.asset(
+              bgImage,
+              fit: fit ?? BoxFit.fill,
+              width: Get.width,
+            ),
           ),
-        ),
         SizedBox(
           height: height,
           width: Get.width,
@@ -188,7 +188,7 @@ Widget customTopContainer({
 Widget customHeader({
   double? height,
   double? radius,
-  Color backgroundColor = const Color(0xFF4D8974),
+  Color backgroundColor = AppColors.headerColor,
   Widget? insideChild,
 }) {
   return Container(

@@ -58,4 +58,5 @@ class AppColors {
   static Color audioBorderColor = const Color(0xFFDADADA);
   static Color clickTextColor = const Color(0xFF85A685);
   static Color planBgColor = const Color(0xFFe2a11d);
+  static const Color headerColor = Color(0xFF4D8974);
 }

@@ -46,6 +46,8 @@ class AssetImages {
   static const String icCorrect = '$_imagePath/ic_correct.svg';
   static const String icAlertCorrect = '$_imagePath/ic_alertCorrect.svg';
   static const String icBgCourseDetail = '$_imagePath/ic_bgCourseDetail.png';
+  static const String icBgCourseDetailDark =
+      '$_imagePath/ic_bgCourseDetail_dark.png';
   static const String icLiveChat = '$_imagePath/ic_live_chat.svg';
   static const String icStar = '$_imagePath/ic_star.svg';
   static const String icStudent = '$_imagePath/ic_student.svg';

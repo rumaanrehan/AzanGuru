@@ -73,7 +73,6 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               orDivider(),
                               SizedBox(height: 28.h),
-
                               Text(
                                 "New Here? Buy Course!",
                                 textAlign: TextAlign.center,
@@ -83,11 +82,11 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               SizedBox(height: 28.h),
-
                               _OptionTile(
                                 icon: Icons.person_rounded,
                                 title: "For Me (Adult)",
-                                subtitle: "Structured lessons, homework for consistent progress and Weekly Live Support.",
+                                subtitle:
+                                    "Structured lessons, homework for consistent progress and Weekly Live Support.",
                                 onTap: () {
                                   Get.toNamed(
                                     Routes.course,
@@ -97,13 +96,12 @@ class _HomePageState extends State<HomePage> {
                                 outlined: true,
                                 primaryCtaLabel: "Take me to Adults Course",
                               ),
-
                               SizedBox(height: 16.h),
-
                               _OptionTile(
                                 icon: Icons.child_care_rounded,
                                 title: "For My Kids",
-                                subtitle: "Fun, bite-sized lessons with badges, homework and Daily Live Classes.",
+                                subtitle:
+                                    "Fun, bite-sized lessons with badges, homework and Daily Live Classes.",
                                 onTap: () {
                                   Get.toNamed(
                                     Routes.course,
@@ -112,7 +110,6 @@ class _HomePageState extends State<HomePage> {
                                 },
                                 primaryCtaLabel: "Take me to Kids Course",
                               ),
-
                               SizedBox(height: 24.h),
                             ],
                           ),
@@ -134,9 +131,14 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Header bar
-          AgHeaderBar(
-            onMenuTap: () => Get.toNamed(Routes.menuPage),
+          // Header bar - pinned to top of screen
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AgHeaderBar(
+              onMenuTap: () => Get.toNamed(Routes.menuPage),
+            ),
           ),
         ],
       ),
@@ -148,7 +150,7 @@ class _HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
       decoration: BoxDecoration(
-        color: const Color(0xFF4D8974), // Primary green background
+        color: AppColors.headerColor, // Primary green background
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
@@ -169,7 +171,8 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                   )),
               const Spacer(),
-              const Icon(Icons.star_rounded, color: Color(0xFFFFD700), size: 20),
+              const Icon(Icons.star_rounded,
+                  color: Color(0xFFFFD700), size: 20),
             ],
           ),
           SizedBox(height: 8.h),
@@ -189,7 +192,7 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 "Go to My Courses →",
                 style: AppFontStyle.poppinsBold.copyWith(
-                  //color: const Color(0xFF4D8974), // Dark green text in light button
+                  //color: AppColors.headerColor, // Dark green text in light button
                   fontSize: 14.5.sp,
                 ),
               ),
@@ -229,7 +232,8 @@ class _HomePageState extends State<HomePage> {
               border: Border.all(color: const Color(0xFFE6EFEA)),
             ),
             child: Marquee(
-              text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ • The best of you is the one who learns the Quran and teaches it • ",
+              text:
+                  "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ • The best of you is the one who learns the Quran and teaches it • ",
               style: AppFontStyle.poppinsMedium.copyWith(
                 fontSize: 14.sp,
                 color: Colors.black87,
@@ -261,7 +265,8 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("🧠 Test Your Quran Knowledge",
-                    style: AppFontStyle.poppinsSemiBold.copyWith(fontSize: 16.sp)),
+                    style:
+                        AppFontStyle.poppinsSemiBold.copyWith(fontSize: 16.sp)),
                 SizedBox(height: 6.h),
                 Text(
                   "Get a personalized course recommendation in 60 seconds.",
@@ -269,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 14.h),
                 customButton(
-                  boxColor: const Color(0xFF4D8974),
+                  boxColor: AppColors.headerColor,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   onTap: () => Get.toNamed(Routes.chooseCoursePage),
                   child: Center(
@@ -290,7 +295,8 @@ class _HomePageState extends State<HomePage> {
 
           BlocBuilder<MyCourseBloc, MyCourseState>(
             builder: (context, state) {
-              if (state is GetMyCourseState && (state.nodes?.isNotEmpty ?? false)) {
+              if (state is GetMyCourseState &&
+                  (state.nodes?.isNotEmpty ?? false)) {
                 return Column(
                   children: [
                     _buildAccessPurchasedCourseBox(),
@@ -351,7 +357,8 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Text(
                     title,
-                    style: AppFontStyle.poppinsSemiBold.copyWith(fontSize: 14.5.sp),
+                    style: AppFontStyle.poppinsSemiBold
+                        .copyWith(fontSize: 14.5.sp),
                   ),
                   if (subtitle != null)
                     Padding(
@@ -367,7 +374,8 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.black45, size: 24),
+            const Icon(Icons.chevron_right_rounded,
+                color: Colors.black45, size: 24),
           ],
         ),
       ),
@@ -402,7 +410,7 @@ class _OptionTile extends StatelessWidget {
       color: Colors.transparent,
       borderRadius: radius, // ripple clip
       child: InkWell(
-        onTap: onTap,        // whole tile is tappable
+        onTap: onTap, // whole tile is tappable
         borderRadius: radius,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -469,20 +477,20 @@ class _OptionTile extends StatelessWidget {
               // this wrapper keeps the visual fill consistent.
               Container(
                 decoration: BoxDecoration(
-                  color: outlined ? Colors.white : const Color(0xFF4D8974),
+                  color: outlined ? Colors.white : AppColors.headerColor,
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: customButton(
                   onTap: onTap, // <<< important
-                  boxColor: outlined ? Colors.white : const Color(0xFF4D8974),
-                  borderColor: outlined ? const Color(0xFF4D8974) : Colors.white,
+                  boxColor: outlined ? Colors.white : AppColors.headerColor,
+                  borderColor: outlined ? AppColors.headerColor : Colors.white,
                   showBorder: outlined,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   child: Center(
                     child: Text(
                       primaryCtaLabel,
                       style: AppFontStyle.poppinsBold.copyWith(
-                        color: outlined ? const Color(0xFF4D8974) : Colors.white,
+                        color: outlined ? AppColors.headerColor : Colors.white,
                         fontSize: 15.sp,
                       ),
                     ),
@@ -495,7 +503,6 @@ class _OptionTile extends StatelessWidget {
       ),
     );
   }
-
 }
 
 Widget orDivider() {

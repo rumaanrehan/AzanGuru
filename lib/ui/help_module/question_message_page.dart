@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 import 'package:azan_guru_mobile/ui/common/loader.dart';
 
 class QuestionMessagePage extends StatefulWidget {
@@ -45,49 +46,22 @@ class _QuestionMessagePageState extends State<QuestionMessagePage> {
         children: [
           customTopContainer(
             bgImage: AssetImages.icBgMyCourse,
-            height: 180.h,
-            radius: 18.r,
+            height: 280.h,
+            // radius: 18.r,
           ),
           SingleChildScrollView(
             child: Column(
               children: [
-                _headerView(),
+                SecondaryAgHeaderBar(
+                  backgroundColor: Colors.transparent,
+                  pageTitle: 'Share your feedback',
+                ),
                 _detailTile(),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _headerView() {
-    return customAppBar(
-      showPrefixIcon: true,
-      onClick: () {
-        Get.back();
-      },
-      showTitle: true,
-      title: 'Share your feedback',
-      suffixIcons: [
-        customIcon(
-          onClick: () {
-            Get.toNamed(Routes.menuPage);
-          },
-          icon: AssetImages.icMenu,
-          iconColor: AppColors.white,
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 20.w),
-          child: customIcon(
-            onClick: () {
-              Get.toNamed(Routes.notificationPage);
-            },
-            icon: AssetImages.icNotification,
-            iconColor: AppColors.white,
-          ),
-        ),
-      ],
     );
   }
 
@@ -121,7 +95,7 @@ class _QuestionMessagePageState extends State<QuestionMessagePage> {
             bottom: 30.h,
             left: 32.w,
             right: 32.w,
-            top: 15.h,
+            top: 150.h,
           ),
           padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 20.h),
           decoration: ShapeDecoration(
@@ -196,7 +170,8 @@ class _QuestionMessagePageState extends State<QuestionMessagePage> {
                   ),
                   width: Get.width,
                   margin: EdgeInsets.only(bottom: 21.h, top: 21.h),
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 5.h),
                   child: TextField(
                     controller: _messageController,
                     keyboardType: TextInputType.multiline,

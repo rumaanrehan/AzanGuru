@@ -13,7 +13,7 @@ class AgHeaderBar extends StatefulWidget {
     required this.onMenuTap,
     this.logoAsset = 'assets/images/ag_header_logo.png',
     this.bismillahText = '﷽',
-    this.backgroundColor = const Color(0xFF4D8974),
+    this.backgroundColor = AppColors.headerColor,
   });
 
   final VoidCallback onMenuTap;
@@ -38,7 +38,8 @@ class _AgHeaderBarState extends State<AgHeaderBar>
     _gifController.addStatusListener(_handleGifStatus);
     // Set slower speed
     _gifController.value = 0;
-    _gifController.duration = const Duration(seconds: 4); // already slow, but can be increased if needed
+    _gifController.duration = const Duration(
+        seconds: 4); // already slow, but can be increased if needed
   }
 
   void _handleGifStatus(AnimationStatus status) {
@@ -120,9 +121,9 @@ class _AgHeaderBarState extends State<AgHeaderBar>
         width: 48.w,
         height: 48.w,
         decoration: BoxDecoration(
-          // color: Colors.white.withOpacity(0.12),
-          // shape: BoxShape.circle,
-        ),
+            // color: Colors.white.withOpacity(0.12),
+            // shape: BoxShape.circle,
+            ),
         alignment: Alignment.center,
         child: Gif(
           image: const AssetImage('assets/images/present-gift.gif'),

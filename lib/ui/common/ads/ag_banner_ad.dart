@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:azan_guru_mobile/bloc/ad_bloc/ad_bloc.dart';
 import 'package:azan_guru_mobile/bloc/my_course_bloc/my_course_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:azan_guru_mobile/service/local_storage/storage_manager.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
-import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/service/local_storage/local_storage_keys.dart';
 import 'package:azan_guru_mobile/common/util.dart';
-
 
 class AGBannerAd extends StatefulWidget {
   final AdSize adSize;
@@ -21,39 +19,13 @@ class AGBannerAd extends StatefulWidget {
 class _AGBannerAdState extends State<AGBannerAd> {
   BannerAd? _bannerAd;
   bool _isBannerAdReady = false;
-  bool _shouldShowAd = true;
-  int _pollAttempts = 0;
   String get token =>
       StorageManager.instance.getString(LocalStorageKeys.prefAuthToken);
 
   @override
   void initState() {
     super.initState();
-    _waitForStorageReady();
-  }
-
-  Future<void> _waitForStorageReady() async {
-    /// Poll up to 20 times every 100ms (max 2s wait) until values are ready.
-    while (_pollAttempts < 20) {
-      final user = StorageManager.instance.getLoginUser();
-      final hasSubscription = StorageManager.instance.getBool(LocalStorageKeys.isUserHasSubscription);
-      final hasPurchase = StorageManager.instance.getBool(LocalStorageKeys.isCoursePurchased);
-
-      if (user != null && hasSubscription || user != null && hasPurchase) {
-        setState(() => _shouldShowAd = false);
-        return;
-      }
-
-      if (user != null || _pollAttempts >= 5) {
-        // If no subscription/purchase after some polls, assume not eligible.
-        break;
-      }
-
-      _pollAttempts++;
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-
-    // If not eligible, load the ad
+    // Load ad immediately - BlocBuilder will control visibility
     _loadBannerAd();
   }
 
@@ -71,6 +43,7 @@ class _AGBannerAdState extends State<AGBannerAd> {
       ),
     )..load();
   }
+
   void _showRemoveAdsDialog() {
     final user = StorageManager.instance.getLoginUser();
     const baseUrl = 'https://azanguru.com/';
@@ -84,7 +57,8 @@ class _AGBannerAdState extends State<AGBannerAd> {
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
@@ -113,14 +87,15 @@ class _AGBannerAdState extends State<AGBannerAd> {
                 const SizedBox(height: 14),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4D8974),
+                    backgroundColor: AppColors.headerColor,
                     minimumSize: const Size.fromHeight(44),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   onPressed: () {
-                    Navigator.of(context).pop();                    debugPrint('url===> $url');
+                    Navigator.of(context).pop();
+                    debugPrint('url===> $url');
                     launchUrlInExternalBrowser(url);
                   },
                   child: const Text(
@@ -153,8 +128,6 @@ class _AGBannerAdState extends State<AGBannerAd> {
     );
   }
 
-
-
   @override
   void dispose() {
     _bannerAd?.dispose();
@@ -163,38 +136,50 @@ class _AGBannerAdState extends State<AGBannerAd> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MyCourseBloc, MyCourseState>(
-      builder: (context, state) {
-        bool isPurchased = false;
-        if (state is GetMyCourseState && (state.nodes?.isNotEmpty ?? false)) {
-          isPurchased = true;
-        }
-
-        if (isPurchased || !_shouldShowAd || !_isBannerAdReady || _bannerAd == null) {
+    // First check AdBloc state for global ad visibility decision
+    return BlocBuilder<AdBloc, AdState>(
+      builder: (context, adState) {
+        // Hide ads if AdBloc says to hide (user has subscription/purchase)
+        if (adState is HideAdsState) {
           return const SizedBox.shrink();
         }
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                width: _bannerAd!.size.width.toDouble(),
-                height: _bannerAd!.size.height.toDouble(),
-                child: AdWidget(ad: _bannerAd!),
-              ),
-            ),
-            TextButton(
-              onPressed: _showRemoveAdsDialog,
-              child: const Text(
-                'Remove Ads?',
-                style: TextStyle(
-                  fontSize: 14,
-                  decoration: TextDecoration.underline,
+        // Also check MyCourseBloc for course purchases
+        return BlocBuilder<MyCourseBloc, MyCourseState>(
+          builder: (context, state) {
+            bool isPurchased = false;
+            if (state is GetMyCourseState &&
+                (state.nodes?.isNotEmpty ?? false)) {
+              isPurchased = true;
+            }
+
+            if (isPurchased || !_isBannerAdReady || _bannerAd == null) {
+              return const SizedBox.shrink();
+            }
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: _bannerAd!.size.width.toDouble(),
+                    height: _bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: _bannerAd!),
+                  ),
                 ),
-              ),
-            ),
-          ],
+                TextButton(
+                  onPressed: _showRemoveAdsDialog,
+                  child: const Text(
+                    'Remove Ads?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

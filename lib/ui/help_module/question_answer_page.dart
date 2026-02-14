@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 import 'package:get/get.dart';
 
 class QuestionAnswerPage extends StatefulWidget {
@@ -77,7 +78,10 @@ class _QuestionAnswerPageState extends State<QuestionAnswerPage> {
           ),
           Column(
             children: [
-              _headerView(),
+              SecondaryAgHeaderBar(
+                backgroundColor: Colors.transparent,
+                pageTitle: '',
+              ),
               BlocConsumer<QuestionAnswerBloc, QuestionAnswerState>(
                 bloc: bloc,
                 listener: (context, state) {
@@ -188,34 +192,6 @@ class _QuestionAnswerPageState extends State<QuestionAnswerPage> {
           )
         ],
       ),
-    );
-  }
-
-  Widget _headerView() {
-    return customAppBar(
-      showPrefixIcon: true,
-      onClick: () {
-        Get.back();
-      },
-      suffixIcons: [
-        customIcon(
-          onClick: () {
-            Get.toNamed(Routes.menuPage);
-          },
-          iconColor: AppColors.white,
-          icon: AssetImages.icMenu,
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: 20.w, right: 20.w),
-          child: customIcon(
-            onClick: () {
-              Get.toNamed(Routes.notificationPage);
-            },
-            icon: AssetImages.icNotification,
-            iconColor: AppColors.white,
-          ),
-        ),
-      ],
     );
   }
 

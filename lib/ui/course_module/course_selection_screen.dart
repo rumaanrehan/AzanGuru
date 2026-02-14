@@ -9,11 +9,11 @@ import 'package:azan_guru_mobile/route/app_routes.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/font_style.dart';
 import 'package:azan_guru_mobile/common/custom_button.dart';
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 
 // TARGET SCREEN & ARGS
 import 'package:azan_guru_mobile/ui/course_module/course_screen.dart';
 import 'package:marquee/marquee.dart';
-
 
 import 'package:video_player/video_player.dart';
 
@@ -23,88 +23,31 @@ import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
 
 import 'package:azan_guru_mobile/common/route_observer.dart';
 
-
-
 class CourseSelectionScreen extends StatelessWidget {
   const CourseSelectionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
+      body: Column(
         children: [
-
-          // Header bar (match HomePage)
-          Container(
-            color: const Color(0xFF4D8974),
-            padding: EdgeInsets.only(
-              left: 20.w,
-              right: 20.w,
-              top: 46.h,
-              bottom: 12.h,
-            ),
-            child: SizedBox(
-              height: 48.h,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Left group: Back + Home
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () => Get.back(),
-                        ),
-                        SizedBox(width: 16.w),
-
-                        // Home
-                        _headerIcon(
-                          context: context,
-                          icon: Icons.home_rounded,
-                          onTap: () => Get.offAllNamed(Routes.tabBarPage),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Right: Menu (=) using your customIcon + asset
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                        children: [
-
-                          Text(
-                            "﷽",
-                            textAlign: TextAlign.right,
-                            style: AppFontStyle.dmSansRegular.copyWith(
-                              fontSize: 22.5.sp, // larger
-                              color: Colors.white,
-                            ),
-                          ),
-
-                          SizedBox(width: 16.w),
-
-                          _headerIcon(
-                            context: context,
-                            icon: Icons.menu_rounded,
-                            onTap: () => Get.toNamed(Routes.menuPage),
-                          ),
-                        ],
-                    ),
-                  ),
-                ],
+          SecondaryAgHeaderBar(
+            pageTitle: "",
+            showBackButton: false,
+            showHomeButton: true,
+            // showMenuButton: true,
+            leadingActions: [
+              Text(
+                "﷽",
+                textAlign: TextAlign.left,
+                style: AppFontStyle.dmSansRegular.copyWith(
+                  fontSize: 30.sp,
+                  color: Colors.white,
+                ),
               ),
-            ),
+            ],
           ),
-          // Body below header
-          Padding(
-            padding: EdgeInsets.only(top: 90.h),
+          Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
@@ -115,26 +58,27 @@ class CourseSelectionScreen extends StatelessWidget {
                     SizedBox(height: 26.h),
 
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 0.w, vertical: 24.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 0.w, vertical: 24.h),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-
                           // Micro-Benefits Strip
                           Container(
                             width: double.infinity,
                             height: 40.h, // fix height for marquee
                             padding: EdgeInsets.symmetric(horizontal: 12.w),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4D8974).withOpacity(0.08),
+                              color: AppColors.headerColor.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(16.r),
                               border: Border.all(
-                                color: const Color(0xFF4D8974).withOpacity(0.25),
+                                color: AppColors.headerColor.withOpacity(0.25),
                               ),
                             ),
                             child: Marquee(
                               //text: "•   Live Tutors   •   Flexible Scheduling   •   Homework & Feedback   •   Progress Tracking",
-                              text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ •  The best of you is the one who learns the Quran and teaches it • ",
+                              text:
+                                  "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ •  The best of you is the one who learns the Quran and teaches it • ",
                               style: AppFontStyle.poppinsMedium.copyWith(
                                 fontSize: 14.sp,
                                 color: Colors.black87,
@@ -147,7 +91,8 @@ class CourseSelectionScreen extends StatelessWidget {
                               startPadding: 10.0,
                               accelerationDuration: const Duration(seconds: 1),
                               accelerationCurve: Curves.linear,
-                              decelerationDuration: const Duration(milliseconds: 500),
+                              decelerationDuration:
+                                  const Duration(milliseconds: 500),
                               decelerationCurve: Curves.easeOut,
                             ),
                           ),
@@ -156,7 +101,8 @@ class CourseSelectionScreen extends StatelessWidget {
 
                           // NEW (use your *direct* Bunny links here)
                           ExplainerVideoNative(
-                            Src: 'https://vz-a554f220-6c6.b-cdn.net/c55c73b6-28c7-4b21-92de-51d0c33414a0/playlist.m3u8',
+                            Src:
+                                'https://vz-a554f220-6c6.b-cdn.net/c55c73b6-28c7-4b21-92de-51d0c33414a0/playlist.m3u8',
                             autoPlay: false,
                           ),
 
@@ -180,7 +126,7 @@ class CourseSelectionScreen extends StatelessWidget {
                       icon: Icons.person_rounded,
                       title: "For Me (Adult)",
                       subtitle:
-                      "Structured lessons, homework for consistent progress and Weekly Live Support.",
+                          "Structured lessons, homework for consistent progress and Weekly Live Support.",
                       onTap: () {
                         Get.toNamed(
                           Routes.course,
@@ -198,7 +144,7 @@ class CourseSelectionScreen extends StatelessWidget {
                       icon: Icons.child_care_rounded,
                       title: "For My Kids",
                       subtitle:
-                      "Fun, bite-sized lessons with badges, homework and Daily Live Classes.",
+                          "Fun, bite-sized lessons with badges, homework and Daily Live Classes.",
                       onTap: () {
                         Get.toNamed(
                           Routes.course,
@@ -225,26 +171,6 @@ class CourseSelectionScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _headerIcon({
-    required BuildContext context,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        width: 38.w,
-        height: 38.w,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: AppColors.white, size: 20.sp),
       ),
     );
   }
@@ -294,7 +220,7 @@ class _OptionTile extends StatelessWidget {
       color: Colors.transparent,
       borderRadius: radius, // ripple clip
       child: InkWell(
-        onTap: onTap,        // whole tile is tappable
+        onTap: onTap, // whole tile is tappable
         borderRadius: radius,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -361,20 +287,20 @@ class _OptionTile extends StatelessWidget {
               // this wrapper keeps the visual fill consistent.
               Container(
                 decoration: BoxDecoration(
-                  color: outlined ? Colors.white : const Color(0xFF4D8974),
+                  color: outlined ? Colors.white : AppColors.headerColor,
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: customButton(
                   onTap: onTap, // <<< important
-                  boxColor: outlined ? Colors.white : const Color(0xFF4D8974),
-                  borderColor: outlined ? const Color(0xFF4D8974) : Colors.white,
+                  boxColor: outlined ? Colors.white : AppColors.headerColor,
+                  borderColor: outlined ? AppColors.headerColor : Colors.white,
                   showBorder: outlined,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   child: Center(
                     child: Text(
                       primaryCtaLabel,
                       style: AppFontStyle.poppinsBold.copyWith(
-                        color: outlined ? const Color(0xFF4D8974) : Colors.white,
+                        color: outlined ? AppColors.headerColor : Colors.white,
                         fontSize: 15.sp,
                       ),
                     ),
@@ -387,7 +313,6 @@ class _OptionTile extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class ExplainerVideoNative extends StatefulWidget {
@@ -482,66 +407,66 @@ class _ExplainerVideoNativeState extends State<ExplainerVideoNative>
         child: _hadError
             ? _errorBox()
             : (!_initialized || _controller == null)
-            ? _loadingBox()
-            : Stack(
-          fit: StackFit.expand,
-          children: [
-            FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _controller!.value.size.width,
-                height: _controller!.value.size.height,
-                child: VideoPlayer(_controller!),
-              ),
-            ),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                if (_controller!.value.isPlaying) {
-                  _controller!.pause();
-                } else {
-                  _controller!.play();
-                }
-                setState(() {});
-              },
-              child: Align(
-                alignment: Alignment.center,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _controller!.value.isPlaying ? 0.0 : 1.0,
-                  child: Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: Colors.black45,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.play_arrow_rounded,
-                      color: Colors.white,
-                      size: 48.r,
-                    ),
+                ? _loadingBox()
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: _controller!.value.size.width,
+                          height: _controller!.value.size.height,
+                          child: VideoPlayer(_controller!),
+                        ),
+                      ),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          if (_controller!.value.isPlaying) {
+                            _controller!.pause();
+                          } else {
+                            _controller!.play();
+                          }
+                          setState(() {});
+                        },
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: _controller!.value.isPlaying ? 0.0 : 1.0,
+                            child: Container(
+                              padding: EdgeInsets.all(10.r),
+                              decoration: BoxDecoration(
+                                color: Colors.black45,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 48.r,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
   Widget _loadingBox() => Container(
-    color: Colors.black,
-    alignment: Alignment.center,
-    child: const CircularProgressIndicator(),
-  );
+        color: Colors.black,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
 
   Widget _errorBox() => Container(
-    color: Colors.black,
-    alignment: Alignment.center,
-    child: const Text(
-      'Video unavailable',
-      style: TextStyle(color: Colors.white),
-    ),
-  );
+        color: Colors.black,
+        alignment: Alignment.center,
+        child: const Text(
+          'Video unavailable',
+          style: TextStyle(color: Colors.white),
+        ),
+      );
 }

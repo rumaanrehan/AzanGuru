@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' show log;
 import 'package:audioplayers/audioplayers.dart' show AudioPlayer;
+import 'package:azan_guru_mobile/bloc/ad_bloc/ad_bloc.dart';
 import 'package:azan_guru_mobile/bloc/course_detail_bloc/course_detail_bloc.dart';
 import 'package:azan_guru_mobile/bloc/firebase_bloc/firebase_bloc.dart';
 import 'package:azan_guru_mobile/bloc/in_app_purchase_bloc/in_app_purchase_bloc.dart';
@@ -30,9 +31,6 @@ import 'package:azan_guru_mobile/bloc/lrf_module/login_module/login_bloc.dart';
 import 'package:azan_guru_mobile/ui/model/mdl_login_param.dart';
 
 import 'package:azan_guru_mobile/common/route_observer.dart';
-
-
-
 
 PlayerBloc get globalPlayerBloc => Get.key.currentContext!.read<PlayerBloc>();
 
@@ -120,7 +118,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
         debugPrint('Error in deep link stream: $err');
       },
     );
-
   }
 
   /// Handles the incoming URL links targeting the application.
@@ -168,14 +165,15 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     debugPrint('Unsupported scheme: ${uri.scheme}');
   }
 
-
   Future<void> _autoLoginFromDeepLink({
     required String email,
     required String password,
   }) async {
     try {
       // If already logged in → go to My Courses tab
-      final alreadyLoggedIn = StorageManager.instance.getBool(LocalStorageKeys.prefUserLogin) == true;
+      final alreadyLoggedIn =
+          StorageManager.instance.getBool(LocalStorageKeys.prefUserLogin) ==
+              true;
       if (alreadyLoggedIn) {
         Get.offAllNamed(Routes.tabBarPage, arguments: 1);
         return;
@@ -233,7 +231,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           arguments: {
             'prefillEmail': email,
             'prefillPassword': password,
-            'fromDeepLink': true, // so LoginPage routes to My Courses on success
+            'fromDeepLink':
+                true, // so LoginPage routes to My Courses on success
           },
         );
       }
@@ -249,8 +248,6 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       );
     }
   }
-
-
 
   initFcm() async {
     metaSdk.setAdvertiserTracking(enabled: true);
@@ -345,11 +342,22 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                   firebaseMessagingService: FCMService.instance,
                 ),
               ),
+              BlocProvider(
+                // Create a bloc provider for the ad bloc.
+                create: (_) {
+                  final adBloc = AdBloc();
+                  // Check ad status on app startup
+                  adBloc.add(CheckAdStatusEvent());
+                  return adBloc;
+                },
+              ),
             ],
             // Build the app widget with the necessary bloc providers.
             child: GetMaterialApp(
               //navigatorKey: navigatorKey,
-              home: widget.forceUpdate ? const ForceUpdateScreen() : SplashScreen(),
+              home: widget.forceUpdate
+                  ? const ForceUpdateScreen()
+                  : SplashScreen(),
 
               // Set the app's text direction to left-to-right.
               textDirection: TextDirection.ltr,
@@ -522,14 +530,14 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     });
 
     // Listen to connectivity changes
-    connectivityService.onConnectivityChanged.listen((ConnectivityResult result) {
+    connectivityService.onConnectivityChanged.listen(
+        (ConnectivityResult result) {
       debugPrint('Connectivity status changed: $result');
       _showNoInternetAlert(result);
     }, onError: (error) {
       debugPrint('Error listening to connectivity changes: $error');
     });
   }
-
 }
 
 class RouteChangeObserver extends GetObserver {

@@ -1,4 +1,3 @@
-import 'package:azan_guru_mobile/common/util.dart';
 import 'package:azan_guru_mobile/constant/app_assets.dart';
 import 'package:azan_guru_mobile/constant/app_colors.dart';
 import 'package:azan_guru_mobile/constant/enum.dart';
@@ -13,7 +12,7 @@ import 'package:get/get.dart';
 // advertisement related imports
 import 'package:google_mobile_ads/google_mobile_ads.dart' show AdSize;
 import 'package:azan_guru_mobile/ui/common/ads/ag_banner_ad.dart';
-
+import 'package:azan_guru_mobile/ui/common/secondary_ag_header_bar.dart';
 
 class HelpPage extends StatefulWidget {
   const HelpPage({super.key});
@@ -51,7 +50,7 @@ class _HelpPageState extends State<HelpPage> {
       backgroundColor: AppColors.bgLightWhitColor,
       body: Column(
         children: [
-          _headerView(),
+          const SecondaryAgHeaderBar(pageTitle: 'Support Desk'),
           Expanded(
             child: ListView.builder(
               shrinkWrap: true,
@@ -124,57 +123,6 @@ class _HelpPageState extends State<HelpPage> {
             ),
           ),
           SvgPicture.asset(AssetImages.icArrowForwordHelp),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerView() {
-    return customTopContainer(
-      bgImage: AssetImages.icBgMyCourse,
-      height: 280.h,
-      insideChild: Column(
-        children: [
-          customAppBar(
-            suffixIcons: [
-              customIcon(
-                iconColor: AppColors.white,
-                onClick: () {
-                  Get.toNamed(Routes.menuPage);
-                },
-                icon: AssetImages.icMenu,
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 20.w, right: 20.w),
-                child: customIcon(
-                  onClick: () {
-                    Get.toNamed(Routes.notificationPage);
-                  },
-                  icon: AssetImages.icNotification,
-                  iconColor: AppColors.white,
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              top: 18.h,
-              bottom: 30.h,
-              left: 40.w,
-              right: 40.w,
-            ),
-            child: Text(
-              'Support Desk',
-              textAlign: TextAlign.center,
-              style: AppFontStyle.poppinsMedium.copyWith(
-                fontSize: 27.sp,
-                color: AppColors.white,
-                height: 1.12,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
         ],
       ),
     );
